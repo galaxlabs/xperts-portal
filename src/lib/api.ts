@@ -66,7 +66,7 @@ export function extractServerMessage(raw: string): string {
 
 export async function login(username: string, password: string) {
   return parse<{ full_name?: string; home_page?: string }>(
-    await fetch(`${API_PREFIX}/method/login`, {
+    await fetch(`${API_PREFIX}/method/cclms.api.portal_auth.login`, {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
