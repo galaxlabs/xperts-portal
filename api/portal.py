@@ -1,0 +1,187 @@
+import frappe
+
+TRANSITIONS = {
+	"Pending Review": {
+		"actions": {
+			"approve": {"to": "Approved"},
+			"reject": {"to": "Rejected"},
+		},
+		"role": "manager",
+	},
+	"Approved": {
+		"actions": {
+			"sign": {"to": "Signed"},
+			"reject": {"to": "Rejected"},
+		},
+		"role": "manager",
+	},
+	"Signed": {
+		"actions": {
+			"install": {"to": "Installed"},
+			"cancel": {"to": "Cancelled"},
+		},
+		"role": "manager",
+	},
+	"Installed": {
+		"actions": {
+			"activate": {"to": "Live"},
+		},
+		"role": "manager",
+	},
+	"Rejected": {
+		"actions": {
+			"reopen": {"to": "Pending Review"},
+		},
+		"role": "manager",
+	},
+}
+
+
+def _get_user_company():
+	profile = frappe.db.get_value("Portal Profile", {"user": frappe.session.user, "enabled": 1}, "company")
+	return profile
+
+
+@frappe.whitelist(allow_guest=True)
+def get_portal_config():
+	user = frappe.session.user
+	if user == "Guest":
+		return {
+			"branding": {
+				"brand_name": "Xperts Global CRM",
+				"brand_subtitle": "Location Intelligence",
+				"logo": None,
+				"primary_color": "#1F1F25",
+				"secondary_color": "#0D0D0D",
+			},
+			"available_pages": [],
+		}
+
+	company = _get_user_company()
+	is_manager = "System Manager" in frappe.get_roles(user)
+	profile = frappe.db.get_value("Portal Profile", {"user": user, "enabled": 1},
+		["company", "role_type"], as_dict=True)
+
+	branding = _get_branding(company)
+	available_pages = ["dashboard", "locations", "company", "settings", "profile"]
+	if is_manager:
+		available_pages.append("users")
+
+	return {
+		"branding": branding,
+		"available_pages": available_pages,
+		"company": company,
+		"role_type": profile.get("role_type") if profile else "Portal User",
+		"is_manager": is_manager,
+		"dashboard_method": "cclms.api.portal.get_dashboard",
+	}
+
+
+def _get_branding(company_name):
+	if company_name and frappe.db.exists("Operator Companies", company_name):
+		doc = frappe.get_doc("Operator Companies", company_name)
+		return {
+			"brand_name": doc.get("operator_name") or "Xperts Global CRM",
+			"brand_subtitle": "Location Intelligence",
+			"logo": None,
+			"primary_color": "#1F1F25",
+			"secondary_color": "#0D0D0D",
+		}
+	return {
+		"brand_name": "Xperts Global CRM",
+		"brand_subtitle": "Location Intelligence",
+		"logo": None,
+		"primary_color": "#1F1F25",
+		"secondary_color": "#0D0D0D",
+	}
+
+
+@frappe.whitelist()
+def get_dashboard():
+	company = _get_user_company()
+	filters = {"company": company} if company else {}
+
+	all_leads = frappe.get_all("ATM Leads", fields=["status"], filters=filters)
+	status_counts = {}
+	for l in all_leads:
+		status_counts[l["status"]] = status_counts.get(l["status"], 0) + 1
+
+	recent = frappe.get_all("ATM Leads",
+		fields=["name", "business_name", "owner_name", "full_address", "city", "state", "status", "creation", "modified"],
+		filters=filters,
+		order_by="modified desc",
+		limit=10,
+	)
+
+	return {
+		"counts": {
+			"total": len(all_leads),
+			"by_status": status_counts,
+		},
+		"recent": recent,
+	}
+
+
+@frappe.whitelist()
+def list_locations(limit: int = 50, status: str = None):
+	company = _get_user_company()
+	filters = {"company": company} if company else {}
+	if status:
+		filters["status"] = status
+
+	rows = frappe.get_all("ATM Leads",
+		fields=["name", "business_name", "owner_name", "full_address", "city", "state", "zip_code", "status", "creation", "modified"],
+		filters=filters,
+		order_by="modified desc",
+		limit_page_length=min(int(limit), 200),
+	)
+	return {"rows": rows}
+
+
+@frappe.whitelist()
+def get_location(name: str):
+	company = _get_user_company()
+	doc = frappe.get_doc("ATM Leads", name)
+	if company and doc.company != company:
+		frappe.throw("Not permitted", frappe.PermissionError)
+	return doc.as_dict()
+
+
+@frappe.whitelist()
+def update_location(name: str, data: dict):
+	company = _get_user_company()
+	doc = frappe.get_doc("ATM Leads", name)
+	if company and doc.company != company:
+		frappe.throw("Not permitted", frappe.PermissionError)
+	allowed = {"business_name", "owner_name", "full_address", "city", "state", "zip_code", "notes"}
+	changed = False
+	for key, value in data.items():
+		if key in allowed and value is not None:
+			setattr(doc, key, value)
+			changed = True
+	if not changed:
+		frappe.throw("No valid fields provided.")
+	doc.save(ignore_permissions=True)
+	frappe.db.commit()
+	return doc.as_dict()
+
+
+@frappe.whitelist()
+def execute_action(doctype: str, name: str, action: str):
+	if doctype != "ATM Leads":
+		frappe.throw("Unsupported doctype.")
+	company = _get_user_company()
+	doc = frappe.get_doc("ATM Leads", name)
+	if company and doc.company != company:
+		frappe.throw("Not permitted", frappe.PermissionError)
+
+	current = doc.status
+	config = TRANSITIONS.get(current)
+	if not config or action not in config.get("actions", {}):
+		frappe.throw(f"Action '{action}' not available from status '{current}'")
+
+	action_def = config["actions"][action]
+	doc.status = action_def["to"]
+	doc.save(ignore_permissions=True)
+	frappe.db.commit()
+	return {"name": doc.name, "status": doc.status}
