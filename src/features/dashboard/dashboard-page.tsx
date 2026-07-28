@@ -10,7 +10,11 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 
 type DashboardData = {
-  counts: Record<string, number>;
+  counts: {
+    total?: number;
+    by_status?: Record<string, number>;
+  };
+  recent?: any[];
   recent_locations?: any[];
 };
 
@@ -25,6 +29,7 @@ const STATUS_BAR_COLOR: Record<string, string> = {
 };
 
 function StatusPill({ status }: { status: string }) {
+  const label = status === "null" || !status ? "Unassigned" : status;
   const colors: Record<string, string> = {
     "Pending Review": "bg-amber-100 text-amber-700 ring-amber-300",
     Approved: "bg-emerald-100 text-emerald-700 ring-emerald-300",
@@ -34,8 +39,8 @@ function StatusPill({ status }: { status: string }) {
     Installed: "bg-teal-100 text-teal-700 ring-teal-300",
     Cancelled: "bg-gray-100 text-gray-500 ring-gray-300",
   };
-  const cls = colors[status] || "bg-gray-100 text-gray-600 ring-gray-300";
-  return <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${cls}`}>{status}</span>;
+  const cls = colors[label] || "bg-gray-100 text-gray-600 ring-gray-300";
+  return <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${cls}`}>{label}</span>;
 }
 
 function StatusBreakdownChart({ leadStatus }: { leadStatus: Record<string, number> }) {
@@ -86,9 +91,10 @@ export function DashboardPage() {
 
   if (loading) return <div className="flex items-center justify-center py-20"><LoaderCircle className="size-6 animate-spin text-primary" /></div>;
 
-  const c = data?.counts || {};
-  const leads = data?.recent_locations || [];
-  const totalLeads = c["Total"] || 0;
+  const counts = data?.counts || {};
+  const c = counts.by_status || {};
+  const leads = data?.recent || data?.recent_locations || [];
+  const totalLeads = counts.total || 0;
   const pendingReview = c["Pending Review"] || 0;
   const approved = c["Approved"] || 0;
   const signed = c["Signed"] || 0;
