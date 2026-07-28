@@ -1,5 +1,5 @@
-export const API_PREFIX = "/api/frappe";
 const BACKEND = import.meta.env.VITE_FRAPPE_URL || "https://btm.digihoopoe.com";
+export const API_PREFIX = `${BACKEND}/api/method`;
 
 function getCsrfToken(): string | null {
   const match = document.cookie.match(/X-Frappe-CSRF-Token=([^;]+)/);

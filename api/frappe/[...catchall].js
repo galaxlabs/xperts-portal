@@ -1,47 +1,27 @@
 const FRAPPE_URL = process.env.VITE_FRAPPE_URL || "https://btm.digihoopoe.com";
 
 module.exports = async (req, res) => {
-  const frappePath = req.url;
-  const apiPath = frappePath.replace("/api/frappe", "/api");
-  const targetUrl = FRAPPE_URL + apiPath;
+  const targetUrl = FRAPPE_URL + "/api" + req.url.replace("/api/frappe", "");
 
-  const headers = { ...req.headers };
-  delete headers.host;
-  delete headers["x-forwarded-host"];
-  delete headers["x-vercel-id"];
-  delete headers["x-vercel-deployment-url"];
-  delete headers["x-vercel-proxy-signature"];
-  delete headers["x-forwarded-proto"];
-  delete headers["x-forwarded-for"];
+  const headers = { "Content-Type": "application/json" };
+  if (req.headers["cookie"]) headers["Cookie"] = req.headers["cookie"];
+  if (req.headers["x-frappe-csrf-token"]) headers["X-Frappe-CSRF-Token"] = req.headers["x-frappe-csrf-token"];
 
-  // Read raw body for POST/PUT
   let body;
   if (req.method !== "GET" && req.method !== "HEAD") {
-    body = await new Promise((resolve) => {
-      let data = "";
-      req.on("data", (chunk) => (data += chunk));
-      req.on("end", () => resolve(data || undefined));
-    });
+    if (req.body && typeof req.body === "object") {
+      body = JSON.stringify(req.body);
+    } else {
+      body = await new Promise((r) => { let d = ""; req.on("data", c => d += c); req.on("end", () => r(d || undefined)); });
+    }
   }
 
   try {
-    const response = await fetch(targetUrl, {
-      method: req.method,
-      headers,
-      body,
-      redirect: "manual",
-    });
-
-    // Forward cookies
-    response.headers.forEach((value, key) => {
-      if (key.toLowerCase() === "set-cookie") {
-        res.setHeader("Set-Cookie", value);
-      }
-    });
-
-    const text = await response.text();
-    res.status(response.status).send(text);
-  } catch (err) {
-    res.status(502).json({ error: "Proxy error", detail: err.message, url: targetUrl });
+    const resp = await fetch(targetUrl, { method: req.method, headers, body, redirect: "manual" });
+    resp.headers.forEach((v, k) => { if (k.toLowerCase() === "set-cookie") res.setHeader("Set-Cookie", v); });
+    const text = await resp.text();
+    res.status(resp.status).setHeader("Content-Type", "application/json").send(text);
+  } catch (e) {
+    res.status(502).json({ error: "Proxy error", message: e.message });
   }
 };
