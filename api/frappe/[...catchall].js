@@ -18,7 +18,10 @@ module.exports = async (req, res) => {
 
   try {
     const resp = await fetch(targetUrl, { method: req.method, headers, body, redirect: "manual" });
-    resp.headers.forEach((v, k) => { if (k.toLowerCase() === "set-cookie") res.setHeader("Set-Cookie", v); });
+    const cookies = typeof resp.headers.getSetCookie === "function"
+      ? resp.headers.getSetCookie()
+      : resp.headers.get("set-cookie");
+    if (cookies) res.setHeader("Set-Cookie", cookies);
     const text = await resp.text();
     res.status(resp.status).setHeader("Content-Type", "application/json").send(text);
   } catch (e) {
