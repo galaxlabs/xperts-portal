@@ -1,5 +1,11 @@
 {
   "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/api/frappe/:path*",
+      "destination": "https://btm.digihoopoe.com/api/:path*"
+    }
+  ],
   "headers": [
     {"source": "/assets/(.*)", "headers": [
       {"key": "Cache-Control", "value": "public, max-age=31536000, immutable"}
