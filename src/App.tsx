@@ -11,6 +11,7 @@ import { DashboardPage } from "@/features/dashboard/dashboard-page";
 import { LocationsPage } from "@/features/locations/locations-page";
 import { UsersPage } from "@/features/users/users-page";
 import { SettingsPage } from "@/features/settings/settings-page";
+import { ProfilePage } from "@/features/profile/profile-page";
 import { getBranding } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -100,7 +101,7 @@ export default function App() {
       case "locations": return <LocationsPage />;
       case "users": return <UsersPage />;
       case "settings": return <SettingsPage theme={theme} onThemeChange={setTheme} />;
-      case "profile": return <SettingsPage theme={theme} onThemeChange={setTheme} />;
+      case "profile": return <ProfilePage />;
       default: return <DashboardPage />;
     }
   }

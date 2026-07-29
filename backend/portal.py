@@ -183,6 +183,29 @@ def _get_branding(company_name):
 
 
 @frappe.whitelist()
+def get_company_profile():
+	company = _get_user_company()
+	return frappe.db.get_value(
+		"Operator Companies",
+		company,
+		["name", "operator_name", "logo", "contact_name", "contact_email", "contact_phone", "website", "business_address"],
+		as_dict=True,
+	)
+
+
+@frappe.whitelist()
+def update_company_profile(data: dict):
+	company = _get_user_company()
+	allowed = {"contact_name", "contact_email", "contact_phone", "website", "business_address"}
+	updates = {field: value for field, value in data.items() if field in allowed}
+	if not updates:
+		frappe.throw("No valid business fields provided.")
+	frappe.db.set_value("Operator Companies", company, updates, update_modified=True)
+	frappe.clear_cache(doctype="Operator Companies", name=company)
+	return get_company_profile()
+
+
+@frappe.whitelist()
 def get_dashboard():
 	companies = _get_user_companies()
 	filters = _location_filters(companies)
