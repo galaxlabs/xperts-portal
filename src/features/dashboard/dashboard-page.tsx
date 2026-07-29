@@ -79,8 +79,7 @@ export function DashboardPage() {
   async function load() {
     setLoading(true);
     try {
-      const method = session?.dashboard_method || "cclms.api.portal.get_dashboard";
-      const result = await call<any>(method, undefined, { mutation: true });
+      const result = await call<DashboardData>("cclms.api.portal_api_v2.get_dashboard", undefined, { mutation: true });
       setData(result || null);
     } catch (err: any) {
       toast.error(err.message);
