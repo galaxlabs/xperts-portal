@@ -186,7 +186,7 @@ export function LocationsPage() {
             </div>
           ) : pageRows.length === 0 ? <div className="py-16 text-center text-sm text-muted-foreground">No locations found</div> : (
             <>
-              <div className="mb-2 text-xs text-muted-foreground">{filteredRows.length} cached locations · synced on demand</div>
+              <div className="mb-2 text-xs text-muted-foreground">{filteredRows.length} locations</div>
               <div className="divide-y">
                 {pageRows.map((item, index) => {
                   const actions = getActions("ATM Lead", item.status, Boolean(session?.is_manager), false, Boolean(session?.user));
