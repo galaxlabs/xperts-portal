@@ -110,9 +110,8 @@ export function LeadDetailDialog({
     setEdits((prev) => ({ ...prev, [field]: value }));
   }
 
-  const isOwner = data?.submitted_by === session?.user;
   const isManager = session?.is_manager ?? false;
-  const actions = data ? getActions("ATM Lead", data.status, isManager, isOwner, Boolean(session?.user)) : [];
+  const actions = data ? getActions("ATM Lead", data.status, isManager, false, Boolean(session?.user)) : [];
   const latitude = Number(data?.latitude);
   const longitude = Number(data?.longitude);
   const hasCoordinates = Number.isFinite(latitude) && Number.isFinite(longitude) && Boolean(latitude || longitude);
@@ -162,10 +161,6 @@ export function LeadDetailDialog({
                   <div>
                     <label className="text-xs text-muted-foreground">ZIP</label>
                     <Input value={edits.zip_code ?? data.zip_code ?? ""} onChange={(e) => setEdit("zip_code", e.target.value)} className="mt-0.5 h-8 text-sm" />
-                  </div>
-                  <div>
-                    <label className="text-xs text-muted-foreground">Proposed Rent ($)</label>
-                    <Input value={edits.proposed_rent ?? data.proposed_rent ?? ""} onChange={(e) => setEdit("proposed_rent", e.target.value)} className="mt-0.5 h-8 text-sm" />
                   </div>
                 </div>
               </div>
@@ -229,7 +224,6 @@ export function LeadDetailDialog({
               <div className="border-t pt-3 text-xs text-muted-foreground flex flex-wrap gap-x-4 gap-y-1">
                 <span>Submitted: {data.creation?.slice(0, 10)}</span>
                 <span>Modified: {data.modified?.slice(0, 10)}</span>
-                <span>By: {data.submitted_by}</span>
               </div>
             </div>
           </>

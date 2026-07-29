@@ -25,9 +25,7 @@ TRANSITIONS = {
 		},
 	},
 	"Rejected": {
-		"actions": {
-			"reopen": {"to": "Pending"},
-		},
+		"actions": {},
 	},
 }
 
@@ -117,8 +115,12 @@ def _portal_location(row):
 
 
 LOCATION_FIELDS = [
-	"name", "business_name", "business_type", "owner_name", "full_address", "city", "state", "state_code",
+	"name", "business_name", "business_type", "full_address", "city", "state", "state_code",
 	"zip_code", "company", "workflow_state", "creation", "modified",
+]
+
+LOCATION_DETAIL_FIELDS = [
+	*LOCATION_FIELDS, "latitude", "longitude", "notes",
 ]
 
 
@@ -226,7 +228,7 @@ def get_dashboard():
 			entry["installed"] += int(status == "Installed")
 
 	recent = frappe.get_all("ATM Leads",
-		fields=["name", "business_name", "business_type", "owner_name", "full_address", "city", "state", "state_code", "company", "workflow_state", "creation", "modified"],
+		fields=LOCATION_FIELDS,
 		filters=filters,
 		order_by="modified desc",
 		limit=100,
@@ -265,7 +267,7 @@ def list_locations(page: int = 1, page_size: int = 25, status: str = None, searc
 	filters = _location_filters(companies, status)
 
 	rows = frappe.get_all("ATM Leads",
-		fields=["name", "business_name", "business_type", "owner_name", "full_address", "city", "state", "state_code", "zip_code", "company", "workflow_state", "creation", "modified"],
+		fields=LOCATION_FIELDS,
 		filters=filters,
 		order_by="modified desc",
 		limit_page_length=100000,
@@ -294,11 +296,7 @@ def get_location(name: str):
 	doc = frappe.get_doc("ATM Leads", name)
 	if not _can_access_location(doc, companies):
 		frappe.throw("Not permitted", frappe.PermissionError)
-	data = doc.as_dict()
-	data["state_history"] = [
-		row for row in data.get("state_history", [])
-		if str(row.get("change_datetime") or row.get("creation") or "") >= PORTAL_DATA_START_DATE
-	]
+	data = {field: doc.get(field) for field in LOCATION_DETAIL_FIELDS}
 	return _portal_location(data)
 
 
@@ -308,7 +306,7 @@ def update_location(name: str, data: dict):
 	doc = frappe.get_doc("ATM Leads", name)
 	if not _can_access_location(doc, companies):
 		frappe.throw("Not permitted", frappe.PermissionError)
-	allowed = {"business_name", "owner_name", "full_address", "city", "state", "zip_code", "notes"}
+	allowed = {"business_name", "business_type", "full_address", "city", "state", "zip_code", "notes"}
 	changed = False
 	for key, value in data.items():
 		if key in allowed and value is not None:
@@ -331,7 +329,7 @@ def create_location(data: dict):
 		frappe.throw("This state is not available for the selected operator company", frappe.PermissionError)
 	if not _company_allows_business_type(company, data.get("business_type")):
 		frappe.throw("This business type is restricted for the selected operator company", frappe.PermissionError)
-	allowed = {"business_name", "business_type", "owner_name", "full_address", "city", "state", "state_code", "zip_code", "notes"}
+	allowed = {"business_name", "business_type", "full_address", "city", "state", "state_code", "zip_code", "notes"}
 	doc = frappe.get_doc({"doctype": "ATM Leads", "company": company, **{key: value for key, value in data.items() if key in allowed}})
 	doc.insert(ignore_permissions=True)
 	return _portal_location(doc.as_dict())

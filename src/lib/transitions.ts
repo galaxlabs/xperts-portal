@@ -37,12 +37,6 @@ const LEAD_TRANSITIONS: Record<string, StatusConfig> = {
       { action: "convert", label: "Convert", icon: "zap", to_status: "Converted" },
     ],
   },
-  Rejected: {
-    role: "owner",
-    actions: [
-      { action: "resubmit", label: "Re-Submit", icon: "rotate-ccw", to_status: "Pending Review" },
-    ],
-  },
 };
 
 const TRANSITIONS: Record<string, Record<string, StatusConfig>> = {
