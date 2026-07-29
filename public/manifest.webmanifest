@@ -1,0 +1,9 @@
+{
+  "name": "Xperts Global CRM",
+  "short_name": "Xperts Global",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#17171D",
+  "theme_color": "#1F1F25",
+  "icons": [{ "src": "/xperts-mark.svg", "sizes": "any", "type": "image/svg+xml" }]
+}

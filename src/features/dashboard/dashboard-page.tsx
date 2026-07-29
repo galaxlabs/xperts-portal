@@ -16,7 +16,11 @@ type DashboardData = {
   };
   recent?: any[];
   recent_locations?: any[];
+  city_stats?: LocationStat[];
+  zip_stats?: LocationStat[];
 };
+
+type LocationStat = { label: string; total: number; signed: number; installed: number };
 
 const STATUS_BAR_COLOR: Record<string, string> = {
   "Pending Review": "from-amber-400 to-orange-500",
@@ -66,6 +70,16 @@ function StatusBreakdownChart({ leadStatus }: { leadStatus: Record<string, numbe
         );
       })}
     </div>
+  );
+}
+
+function LocationAnalytics({ title, data }: { title: string; data: LocationStat[] }) {
+  const max = Math.max(...data.map((item) => item.total), 1);
+  return (
+    <Card className="border-0 shadow-sm ring-1 ring-gray-200">
+      <CardHeader className="pb-3"><CardTitle className="flex items-center gap-2 text-base"><BarChart3 className="size-4 text-zinc-600" /> {title}</CardTitle><CardDescription>Total locations with signed and installed counts</CardDescription></CardHeader>
+      <CardContent>{data.length === 0 ? <p className="py-8 text-center text-sm text-muted-foreground">No data yet</p> : <div className="space-y-3">{data.map((item) => <div key={item.label}><div className="mb-1 flex justify-between gap-3 text-sm"><span className="truncate font-medium">{item.label}</span><span className="shrink-0 text-xs text-muted-foreground">{item.total} total · {item.signed} signed · {item.installed} installed</span></div><div className="h-2 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500" style={{ width: `${Math.round((item.total / max) * 100)}%` }} /></div></div>)}</div>}</CardContent>
+    </Card>
   );
 }
 
@@ -178,6 +192,10 @@ export function DashboardPage() {
             </div>
           </CardContent>
         </Card>
+      </div>
+      <div className="grid gap-5 xl:grid-cols-2">
+        <LocationAnalytics title="City Performance" data={data?.city_stats || []} />
+        <LocationAnalytics title="ZIP Code Performance" data={data?.zip_stats || []} />
       </div>
     </div>
   );

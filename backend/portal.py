@@ -1,4 +1,5 @@
 import frappe
+from frappe.utils import now_datetime
 
 TRANSITIONS = {
 	"Pending Review": {
@@ -131,6 +132,12 @@ def _portal_location(row):
 	return row
 
 
+LOCATION_FIELDS = [
+	"name", "business_name", "business_type", "owner_name", "full_address", "city", "state", "state_code",
+	"zip_code", "company", "workflow_state", "creation", "modified",
+]
+
+
 @frappe.whitelist(allow_guest=True)
 def get_portal_config():
 	user = frappe.session.user
@@ -215,13 +222,23 @@ def get_dashboard():
 	companies = _get_user_companies()
 	filters = _location_filters(companies)
 
-	all_leads = frappe.get_all("ATM Leads", fields=["workflow_state", "company", "state", "state_code", "business_type"], filters=filters)
+	all_leads = frappe.get_all("ATM Leads", fields=["workflow_state", "company", "state", "state_code", "business_type", "city", "zip_code"], filters=filters)
 	status_counts = {}
+	city_stats = {}
+	zip_stats = {}
 	for l in all_leads:
 		if not _can_access_location(l, companies):
 			continue
 		status = WORKFLOW_TO_PORTAL[l["workflow_state"]]
 		status_counts[status] = status_counts.get(status, 0) + 1
+		for key, value in (("city", l.city), ("zip_code", l.zip_code)):
+			if not value:
+				continue
+			bucket = city_stats if key == "city" else zip_stats
+			entry = bucket.setdefault(value, {"label": value, "total": 0, "signed": 0, "installed": 0})
+			entry["total"] += 1
+			entry["signed"] += int(status == "Signed")
+			entry["installed"] += int(status == "Installed")
 
 	recent = frappe.get_all("ATM Leads",
 		fields=["name", "business_name", "business_type", "owner_name", "full_address", "city", "state", "state_code", "company", "workflow_state", "creation", "modified"],
@@ -236,7 +253,24 @@ def get_dashboard():
 			"by_status": status_counts,
 		},
 		"recent": [_portal_location(row) for row in recent if _can_access_location(row, companies)][:10],
+		"city_stats": sorted(city_stats.values(), key=lambda item: item["total"], reverse=True)[:8],
+		"zip_stats": sorted(zip_stats.values(), key=lambda item: item["total"], reverse=True)[:8],
 	}
+
+
+@frappe.whitelist()
+def sync_locations(since: str = None):
+	companies = _get_user_companies()
+	filters = _location_filters(companies) if not since else [["company", "in", companies], ["modified", ">", since]]
+	rows = frappe.get_all("ATM Leads", fields=LOCATION_FIELDS, filters=filters, order_by="modified desc", limit_page_length=100000)
+	allowed = []
+	removed = []
+	for row in rows:
+		if row.workflow_state in WORKFLOW_TO_PORTAL and str(row.modified)[:10] >= PORTAL_DATA_START_DATE and _can_access_location(row, companies):
+			allowed.append(_portal_location(row))
+		else:
+			removed.append(row.name)
+	return {"rows": allowed, "removed": removed, "synced_at": now_datetime().strftime("%Y-%m-%d %H:%M:%S.%f")}
 
 
 @frappe.whitelist()
