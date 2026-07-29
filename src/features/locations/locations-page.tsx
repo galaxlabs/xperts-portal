@@ -21,6 +21,7 @@ type LocationRecord = {
   full_address?: string;
   city?: string;
   state?: string;
+  state_code?: string;
   zip_code?: string;
   status: string;
   creation?: string;
@@ -81,6 +82,10 @@ export function LocationsPage() {
     const status = new URLSearchParams(window.location.search).get("status") || "";
     return STATUSES.includes(status) ? status : "all";
   });
+  const [cityFilter, setCityFilter] = useState("all");
+  const [stateFilter, setStateFilter] = useState("all");
+  const [zipFilter, setZipFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [view, setView] = useState<"list" | "kanban">("list");
   const [processing, setProcessing] = useState<string | null>(null);
@@ -119,15 +124,24 @@ export function LocationsPage() {
   }
 
   const filteredRows = useMemo(() => {
-    const query = deferredSearch.trim().toLowerCase();
+    const terms = deferredSearch.toLowerCase().trim().split(/\s+/).filter(Boolean);
     return rows.filter((row) => {
       if (statusFilter !== "all" && row.status !== statusFilter) return false;
-      if (!query) return true;
-      return [row.business_name, row.business_type, row.full_address, row.city, row.state, row.zip_code]
-        .some((value) => value?.toLowerCase().includes(query));
+      if (cityFilter !== "all" && row.city !== cityFilter) return false;
+      if (stateFilter !== "all" && row.state !== stateFilter) return false;
+      if (zipFilter !== "all" && row.zip_code !== zipFilter) return false;
+      if (typeFilter !== "all" && row.business_type !== typeFilter) return false;
+      const searchable = [row.business_name, row.business_type, row.full_address, row.city, row.state, row.state_code, row.zip_code]
+        .filter(Boolean).join(" ").toLowerCase();
+      return terms.every((term) => searchable.includes(term));
     });
-  }, [rows, statusFilter, deferredSearch]);
-  const suggestions = useMemo(() => [...new Set(rows.flatMap((row) => [row.business_name, row.business_type, row.full_address, row.city, row.state, row.zip_code]).filter((value): value is string => Boolean(value)))].slice(0, 100), [rows]);
+  }, [rows, statusFilter, cityFilter, stateFilter, zipFilter, typeFilter, deferredSearch]);
+  const filterOptions = useMemo(() => ({
+    cities: [...new Set(rows.map((row) => row.city).filter((value): value is string => Boolean(value)))].toSorted(),
+    states: [...new Set(rows.map((row) => row.state).filter((value): value is string => Boolean(value)))].toSorted(),
+    zipCodes: [...new Set(rows.map((row) => row.zip_code).filter((value): value is string => Boolean(value)))].toSorted(),
+    types: [...new Set(rows.map((row) => row.business_type).filter((value): value is string => Boolean(value)))].toSorted(),
+  }), [rows]);
   const pageCount = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
   const pageRows = filteredRows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
@@ -166,8 +180,12 @@ export function LocationsPage() {
         </CardHeader>
         <CardContent>
           <div className="mb-4 flex flex-wrap items-center gap-3">
-            <div className="relative min-w-[180px] flex-1"><Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" /><Input list="location-search-suggestions" value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} placeholder="Search business, type, address, city, state, ZIP..." className="h-8 rounded-lg pl-8 text-sm" /><datalist id="location-search-suggestions">{suggestions.map((value) => <option key={value} value={value} />)}</datalist></div>
+            <div className="relative min-w-[180px] flex-1"><Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" /><Input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} placeholder="Search words or numbers..." className="h-8 rounded-lg pl-8 text-sm" /></div>
             <Select value={statusFilter} onValueChange={(value) => { setStatusFilter(value); setPage(1); }}><SelectTrigger className="h-8 w-36 rounded-lg text-xs"><SelectValue placeholder="Status" /></SelectTrigger><SelectContent><SelectItem value="all">All statuses</SelectItem>{STATUSES.map((status) => <SelectItem key={status} value={status}>{status}</SelectItem>)}</SelectContent></Select>
+            <Select value={cityFilter} onValueChange={(value) => { setCityFilter(value); setPage(1); }}><SelectTrigger className="h-8 w-32 rounded-lg text-xs"><SelectValue placeholder="City" /></SelectTrigger><SelectContent><SelectItem value="all">All cities</SelectItem>{filterOptions.cities.map((city) => <SelectItem key={city} value={city}>{city}</SelectItem>)}</SelectContent></Select>
+            <Select value={stateFilter} onValueChange={(value) => { setStateFilter(value); setPage(1); }}><SelectTrigger className="h-8 w-28 rounded-lg text-xs"><SelectValue placeholder="State" /></SelectTrigger><SelectContent><SelectItem value="all">All states</SelectItem>{filterOptions.states.map((state) => <SelectItem key={state} value={state}>{state}</SelectItem>)}</SelectContent></Select>
+            <Select value={zipFilter} onValueChange={(value) => { setZipFilter(value); setPage(1); }}><SelectTrigger className="h-8 w-28 rounded-lg text-xs"><SelectValue placeholder="ZIP" /></SelectTrigger><SelectContent><SelectItem value="all">All ZIP codes</SelectItem>{filterOptions.zipCodes.map((zipCode) => <SelectItem key={zipCode} value={zipCode}>{zipCode}</SelectItem>)}</SelectContent></Select>
+            <Select value={typeFilter} onValueChange={(value) => { setTypeFilter(value); setPage(1); }}><SelectTrigger className="h-8 w-36 rounded-lg text-xs"><SelectValue placeholder="Type" /></SelectTrigger><SelectContent><SelectItem value="all">All types</SelectItem>{filterOptions.types.map((type) => <SelectItem key={type} value={type}>{type}</SelectItem>)}</SelectContent></Select>
             <Button variant="ghost" size="icon-sm" onClick={() => void sync()} disabled={syncing}><RefreshCw className={`size-3.5 ${syncing ? "animate-spin" : ""}`} /></Button>
           </div>
 
