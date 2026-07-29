@@ -21,7 +21,6 @@ const LEAD_TRANSITIONS: Record<string, StatusConfig> = {
   Approved: {
     role: "owner",
     actions: [
-      { action: "sign", label: "Mark Signed", icon: "file-signature", to_status: "Signed" },
       { action: "reject", label: "Reject", icon: "thumbs-down", to_status: "Rejected" },
     ],
   },

@@ -18,6 +18,7 @@ type LocationRecord = {
   name: string;
   business_name: string;
   business_type?: string;
+  owner_name?: string;
   full_address?: string;
   city?: string;
   state?: string;
@@ -25,7 +26,6 @@ type LocationRecord = {
   status: string;
   creation?: string;
   modified?: string;
-  submitted_by?: string;
 };
 
 type Cache = { syncedAt: string; rows: LocationRecord[] };
@@ -106,10 +106,11 @@ export function LocationsPage() {
     return rows.filter((row) => {
       if (statusFilter !== "all" && row.status !== statusFilter) return false;
       if (!query) return true;
-      return [row.business_name, row.full_address, row.city, row.state, row.zip_code]
+      return [row.business_name, row.business_type, row.owner_name, row.full_address, row.city, row.state, row.zip_code]
         .some((value) => value?.toLowerCase().includes(query));
     });
   }, [rows, statusFilter, deferredSearch]);
+  const suggestions = useMemo(() => [...new Set(rows.flatMap((row) => [row.business_name, row.owner_name, row.full_address, row.city, row.state, row.zip_code]).filter((value): value is string => Boolean(value)))].slice(0, 100), [rows]);
   const pageCount = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
   const pageRows = filteredRows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
@@ -148,7 +149,7 @@ export function LocationsPage() {
         </CardHeader>
         <CardContent>
           <div className="mb-4 flex flex-wrap items-center gap-3">
-            <div className="relative min-w-[180px] flex-1"><Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" /><Input value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} placeholder="Search cached locations..." className="h-8 rounded-lg pl-8 text-sm" /></div>
+            <div className="relative min-w-[180px] flex-1"><Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" /><Input list="location-search-suggestions" value={search} onChange={(event) => { setSearch(event.target.value); setPage(1); }} placeholder="Search business, owner, address, city, state, ZIP..." className="h-8 rounded-lg pl-8 text-sm" /><datalist id="location-search-suggestions">{suggestions.map((value) => <option key={value} value={value} />)}</datalist></div>
             <Select value={statusFilter} onValueChange={(value) => { setStatusFilter(value); setPage(1); }}><SelectTrigger className="h-8 w-36 rounded-lg text-xs"><SelectValue placeholder="Status" /></SelectTrigger><SelectContent><SelectItem value="all">All statuses</SelectItem>{STATUSES.map((status) => <SelectItem key={status} value={status}>{status}</SelectItem>)}</SelectContent></Select>
             <Button variant="ghost" size="icon-sm" onClick={() => void sync()} disabled={syncing}><RefreshCw className={`size-3.5 ${syncing ? "animate-spin" : ""}`} /></Button>
           </div>
@@ -174,7 +175,7 @@ export function LocationsPage() {
                   const actions = getActions("ATM Lead", item.status, Boolean(session?.is_manager), false, Boolean(session?.user));
                   return <div key={item.name} className="grid grid-cols-[3rem_minmax(0,1fr)_8rem_auto] items-center gap-3 py-2.5 hover:bg-muted/30">
                     <span className="text-center text-xs text-muted-foreground">{(page - 1) * PAGE_SIZE + index + 1}</span>
-                    <button className="min-w-0 text-left" onClick={() => setLeadDetail(item.name)}><p className="truncate text-sm font-medium">{item.business_name || item.name}</p><p className="truncate text-xs text-muted-foreground">{item.business_type || "-"} · {item.city || "-"}, {item.state || "-"} · {item.zip_code || "-"}</p></button>
+                    <button className="min-w-0 text-left" onClick={() => setLeadDetail(item.name)}><p className="truncate text-sm font-medium">{item.business_name || item.name}</p><p className="truncate text-xs text-muted-foreground">{item.business_type || "-"} · {item.owner_name || "No owner"}</p><p className="truncate text-xs text-muted-foreground">{item.full_address || "No address"} · {item.city || "-"}, {item.state || "-"} · {item.zip_code || "-"}</p></button>
                     <StatusBadge status={item.status} />
                     <div className="flex gap-1">{actions.slice(0, 2).map((action) => <Button key={action.action} size="sm" variant="outline" className={actionColor(action.action)} disabled={processing === item.name} onClick={() => void handleAction(item, action)}>{action.action === "approve" && <ThumbsUp className="size-3" />}{action.action === "reject" && <ThumbsDown className="size-3" />}{action.action === "install" && <Wrench className="size-3" />}{action.action === "convert" && <Zap className="size-3" />}{action.action === "sign" && <FileSignature className="size-3" />}{action.label}</Button>)}</div>
                   </div>;

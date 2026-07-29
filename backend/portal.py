@@ -10,7 +10,6 @@ TRANSITIONS = {
 	},
 	"Approved": {
 		"actions": {
-			"sign": {"to": "Signed"},
 			"reject": {"to": "Rejected"},
 		},
 	},

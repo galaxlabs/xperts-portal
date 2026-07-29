@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { LoaderCircle, Clock, Building2 } from "lucide-react";
+import { LoaderCircle, Clock, Building2, ExternalLink, MapPin } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -113,6 +113,10 @@ export function LeadDetailDialog({
   const isOwner = data?.submitted_by === session?.user;
   const isManager = session?.is_manager ?? false;
   const actions = data ? getActions("ATM Lead", data.status, isManager, isOwner, Boolean(session?.user)) : [];
+  const latitude = Number(data?.latitude);
+  const longitude = Number(data?.longitude);
+  const hasCoordinates = Number.isFinite(latitude) && Number.isFinite(longitude) && Boolean(latitude || longitude);
+  const mapUrl = hasCoordinates ? `https://www.google.com/maps?q=${encodeURIComponent(`${latitude},${longitude}`)}` : "";
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
@@ -165,6 +169,19 @@ export function LeadDetailDialog({
                   </div>
                 </div>
               </div>
+
+              {hasCoordinates && (
+                <div>
+                  <div className="mb-2 flex items-center justify-between">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Location Map</h4>
+                    <a href={mapUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline"><ExternalLink className="size-3" /> Open map</a>
+                  </div>
+                  <div className="overflow-hidden rounded-lg border bg-muted/20">
+                    <iframe title="Location map" src={`${mapUrl}&output=embed`} className="h-52 w-full border-0" loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
+                    <p className="flex items-center gap-1 px-3 py-2 text-xs text-muted-foreground"><MapPin className="size-3" /> {latitude.toFixed(6)}, {longitude.toFixed(6)}</p>
+                  </div>
+                </div>
+              )}
 
               <div>
                 <h4 className="mb-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">Notes</h4>
