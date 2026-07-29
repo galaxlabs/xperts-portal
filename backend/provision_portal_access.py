@@ -11,6 +11,9 @@ ACTIVE_COMPANIES = {
 	"Insta Bit": "admin@instabit.com",
 	"Rocket Coin": "admin@rocketcoin.com",
 	"Un Bank": "admin@unbank.com",
+	"CoinConnections": "admin@coinconnections.com",
+	"CoinFlip ATM": "admin@coinflipatm.com",
+	"CoinFlip BTM": "admin@coinflipbtm.com",
 }
 
 
@@ -53,7 +56,23 @@ def run(password):
 		"admin@instabit.com": ["Insta Bit"],
 		"admin@rocketcoin.com": ["Rocket Coin"],
 		"admin@unbank.com": ["Un Bank"],
+		"admin@coinconnections.com": ["CoinConnections"],
+		"admin@coinflipatm.com": ["CoinFlip ATM"],
+		"admin@coinflipbtm.com": ["CoinFlip BTM"],
 	}.items():
+		if not frappe.db.exists("User", user):
+			user_doc = frappe.get_doc({
+				"doctype": "User",
+				"email": user,
+				"first_name": companies[0],
+				"full_name": f"Admin {companies[0]}",
+				"enabled": 1,
+				"user_type": "System User",
+				"send_welcome_email": 0,
+				"roles": [{"role": "Portal User"}],
+			})
+			user_doc.insert(ignore_permissions=True)
+			update_password(user, password)
 		frappe.db.set_value("User", user, "enabled", 1, update_modified=False)
 		profile_name = frappe.db.get_value("Portal Profile", {"user": user}, "name")
 		if profile_name:

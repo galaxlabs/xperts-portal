@@ -99,15 +99,26 @@ def _state_matches(rule, state, state_code):
 
 
 def _company_allows_state(company, state, state_code):
-	permitted = frappe.get_all("Permitted States", filters={"parent": company}, fields=["state", "state_code"])
+	company_doc = frappe.get_cached_doc("Operator Companies", company)
+	permitted = company_doc.get("state_name") or []
 	if permitted:
 		return any(_state_matches(rule, state, state_code) for rule in permitted)
-	restricted = frappe.get_all("Restricted States", filters={"parent": company}, fields=["state", "state_code"])
+	restricted = company_doc.get("restricted_states") or []
 	return not any(_state_matches(rule, state, state_code) for rule in restricted)
 
 
+def _company_allows_business_type(company, business_type):
+	company_doc = frappe.get_cached_doc("Operator Companies", company)
+	restricted_types = {row.restricted_business for row in company_doc.get("restricted_type") or []}
+	return business_type not in restricted_types
+
+
 def _can_access_location(doc, companies):
-	return doc.company in companies and _company_allows_state(doc.company, doc.state, doc.state_code)
+	return (
+		doc.company in companies
+		and _company_allows_state(doc.company, doc.state, doc.state_code)
+		and _company_allows_business_type(doc.company, doc.business_type)
+	)
 
 
 def _portal_location(row):
@@ -176,16 +187,16 @@ def get_dashboard():
 	companies = _get_user_companies()
 	filters = _location_filters(companies)
 
-	all_leads = frappe.get_all("ATM Leads", fields=["workflow_state", "company", "state", "state_code"], filters=filters)
+	all_leads = frappe.get_all("ATM Leads", fields=["workflow_state", "company", "state", "state_code", "business_type"], filters=filters)
 	status_counts = {}
 	for l in all_leads:
-		if not _company_allows_state(l.company, l.state, l.state_code):
+		if not _can_access_location(l, companies):
 			continue
 		status = WORKFLOW_TO_PORTAL[l["workflow_state"]]
 		status_counts[status] = status_counts.get(status, 0) + 1
 
 	recent = frappe.get_all("ATM Leads",
-		fields=["name", "business_name", "owner_name", "full_address", "city", "state", "state_code", "company", "workflow_state", "creation", "modified"],
+		fields=["name", "business_name", "business_type", "owner_name", "full_address", "city", "state", "state_code", "company", "workflow_state", "creation", "modified"],
 		filters=filters,
 		order_by="modified desc",
 		limit=100,
@@ -196,7 +207,7 @@ def get_dashboard():
 		"total": sum(status_counts.values()),
 			"by_status": status_counts,
 		},
-		"recent": [_portal_location(row) for row in recent if _company_allows_state(row.company, row.state, row.state_code)][:10],
+		"recent": [_portal_location(row) for row in recent if _can_access_location(row, companies)][:10],
 	}
 
 
@@ -211,7 +222,7 @@ def list_locations(limit: int = 50, status: str = None):
 		order_by="modified desc",
 		limit_page_length=1000,
 	)
-	rows = [row for row in rows if _company_allows_state(row.company, row.state, row.state_code)]
+	rows = [row for row in rows if _can_access_location(row, companies)]
 	return {"rows": [_portal_location(row) for row in rows[:min(int(limit), 200)]]}
 
 
@@ -251,6 +262,8 @@ def create_location(data: dict):
 		frappe.throw("Not permitted", frappe.PermissionError)
 	if not _company_allows_state(company, data.get("state"), data.get("state_code")):
 		frappe.throw("This state is not available for the selected operator company", frappe.PermissionError)
+	if not _company_allows_business_type(company, data.get("business_type")):
+		frappe.throw("This business type is restricted for the selected operator company", frappe.PermissionError)
 	allowed = {"business_name", "business_type", "owner_name", "full_address", "city", "state", "state_code", "zip_code", "notes"}
 	doc = frappe.get_doc({"doctype": "ATM Leads", "company": company, **{key: value for key, value in data.items() if key in allowed}})
 	doc.insert(ignore_permissions=True)
