@@ -50,10 +50,7 @@ export function AppSidebar({
     <aside className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
       <div className="flex items-center gap-3 border-b border-sidebar-border px-5 py-4">
         <img src="/xperts-mark.svg" alt="Xperts Global" className="size-10 shrink-0 rounded-xl shadow-sm" />
-        <div className="min-w-0 text-start">
-          <strong className="block truncate text-sm font-semibold">Xperts Global</strong>
-          <span className="block truncate text-xs text-sidebar-foreground/70">{companyName}</span>
-        </div>
+        <strong className="min-w-0 truncate text-start text-sm font-semibold">Xperts Global CRM</strong>
         <Button variant="ghost" size="icon-sm" className="ms-auto md:hidden" onClick={() => setMobileOpen(false)}>
           <X className="size-4" />
         </Button>
