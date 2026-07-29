@@ -193,7 +193,7 @@ export function LeadDetailDialog({
                   <Button
                     key={actionDef.action}
                     size="sm"
-                    className={`gap-1.5 ${actionDef.action === "approve" ? "bg-emerald-600 text-white hover:bg-emerald-700" : actionDef.action === "reject" ? "bg-rose-600 text-white hover:bg-rose-700" : ""}`}
+                    className={`gap-1.5 ${actionDef.action === "approve" || actionDef.action === "install" ? "bg-emerald-600 text-white hover:bg-emerald-700" : actionDef.action === "reject" ? "bg-rose-600 text-white hover:bg-rose-700" : ""}`}
                     disabled={saving}
                     onClick={() => handleAction(actionDef)}
                   >
@@ -207,7 +207,7 @@ export function LeadDetailDialog({
                       Installation date
                       <Input type="date" value={installDate} onChange={(e) => setInstallDate(e.target.value)} className="h-8" required />
                     </label>
-                    <Button size="sm" disabled={saving || !installDate} onClick={() => handleAction({ action: "install", label: "Schedule Installation", icon: "wrench", to_status: "Installed" })}>
+                    <Button size="sm" className="bg-emerald-600 text-white hover:bg-emerald-700" disabled={saving || !installDate} onClick={() => handleAction({ action: "install", label: "Schedule Installation", icon: "wrench", to_status: "Installed" })}>
                       Schedule Installation
                     </Button>
                     <Button size="sm" variant="ghost" disabled={saving} onClick={() => setScheduleInstall(false)}>Cancel</Button>

@@ -27,20 +27,23 @@ type LocationRecord = {
   modified?: string;
 };
 
-type Cache = { syncedAt: string; rows: LocationRecord[] };
+type Cache = { syncedAt: string; rows: LocationRecord[]; partial?: boolean };
 
 const STATUSES = ["Pending Review", "Approved", "Rejected", "Signed", "Installed", "Converted"];
 const KANBAN_STATUSES = STATUSES;
 const PAGE_SIZE = 25;
+const CACHE_ROW_LIMIT = 1_000;
+const CACHE_PREFIX = "xperts-location-cache:";
 
 function actionColor(action: string) {
   if (action === "approve") return "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100";
   if (action === "reject") return "border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100";
+  if (action === "install") return "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100";
   return "";
 }
 
 function cacheKey(companies: string[]) {
-  return `xperts-location-cache:v4:${companies.slice().sort().join("|")}`;
+  return `${CACHE_PREFIX}v5:${companies.slice().sort().join("|")}`;
 }
 
 function readCache(key: string): Cache | null {
@@ -49,6 +52,21 @@ function readCache(key: string): Cache | null {
     return value ? JSON.parse(value) : null;
   } catch {
     return null;
+  }
+}
+
+function saveCache(key: string, syncedAt: string, rows: LocationRecord[]) {
+  try {
+    for (const oldKey of Object.keys(localStorage)) {
+      if (oldKey.startsWith(CACHE_PREFIX) && oldKey !== key) localStorage.removeItem(oldKey);
+    }
+    localStorage.setItem(key, JSON.stringify({
+      syncedAt,
+      rows: rows.slice(0, CACHE_ROW_LIMIT),
+      partial: rows.length > CACHE_ROW_LIMIT,
+    }));
+  } catch {
+    localStorage.removeItem(key);
   }
 }
 
@@ -83,7 +101,7 @@ export function LocationsPage() {
     try {
       const update = await call<{ rows: LocationRecord[]; removed: string[]; synced_at: string }>(
         "cclms.api.portal_api_v6.sync_locations",
-        { since: cached?.syncedAt },
+        { since: cached?.partial ? undefined : cached?.syncedAt },
         { mutation: false }
       );
       const merged = new Map((cached?.rows || []).map((row) => [row.name, row]));
@@ -91,7 +109,7 @@ export function LocationsPage() {
       for (const row of update.rows || []) merged.set(row.name, row);
       const nextRows = [...merged.values()].toSorted((a, b) => (b.modified || "").localeCompare(a.modified || ""));
       setRows(nextRows);
-      localStorage.setItem(key, JSON.stringify({ syncedAt: update.synced_at, rows: nextRows }));
+      saveCache(key, update.synced_at, nextRows);
     } catch (error: any) {
       if (!cached) toast.error(error.message);
     } finally {

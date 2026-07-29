@@ -25,7 +25,9 @@ TRANSITIONS = {
 		},
 	},
 	"Rejected": {
-		"actions": {},
+		"actions": {
+			"approve": {"to": "Approved"},
+		},
 	},
 }
 
