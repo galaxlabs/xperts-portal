@@ -66,7 +66,7 @@ export function extractServerMessage(raw: string): string {
 
 export async function login(username: string, password: string) {
   return parse<{ full_name?: string; home_page?: string }>(
-    await fetch(`${API_PREFIX}/method/cclms.api.portal_auth.login`, {
+    await fetch(`${API_PREFIX}/method/cclms.api.portal_auth_v3.login`, {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -95,8 +95,9 @@ export async function getSession() {
       roles?: string[];
       role_type?: string;
       company?: string;
+      companies?: string[];
       is_manager?: boolean;
-    }>("cclms.api.auth.get_current_user", undefined, { mutation: false });
+    }>("cclms.api.auth_v3.get_current_user", undefined, { mutation: false });
 
     const portalConfig = await call<{
       branding?: {
@@ -118,6 +119,7 @@ export async function getSession() {
       roles: userResult.roles,
       role_type: userResult.role_type,
       company: userResult.company,
+      companies: userResult.companies,
       is_manager: userResult.is_manager,
       available_pages: portalConfig?.available_pages || [],
       dashboard_method: "cclms.api.portal_api_v3.get_dashboard",

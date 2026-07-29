@@ -7,6 +7,7 @@ export type SessionUser = {
   roles?: string[];
   role_type?: string;
   company?: string;
+  companies?: string[];
   is_manager?: boolean;
   available_pages?: string[];
   dashboard_method?: string;

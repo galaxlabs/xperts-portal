@@ -73,6 +73,9 @@ export function DashboardPage() {
   const { session } = useAuth();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const companyContext = session?.companies && session.companies.length > 1
+    ? `${session.company} + ${session.companies.length - 1} companies`
+    : session?.company || session?.branding?.brand_name || "Xperts Global";
 
   useEffect(() => { load(); }, []);
 
@@ -127,8 +130,8 @@ export function DashboardPage() {
       <div className="rounded-2xl bg-gradient-to-br from-zinc-800 via-zinc-900 to-black p-6 text-white shadow-lg">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-xl font-bold">Welcome, {session?.company || "Xperts Global"}</h1>
-            <p className="mt-1 text-sm text-zinc-400">{session?.company || session?.branding?.brand_name || "Xperts Global"} · Location Intelligence</p>
+            <h1 className="text-xl font-bold">Welcome, {session?.full_name || "there"}</h1>
+            <p className="mt-1 text-sm text-zinc-400">{companyContext} · Location Intelligence</p>
           </div>
           <Button size="sm" variant="ghost" className="gap-1.5 rounded-xl text-white/70 hover:text-white hover:bg-white/20" onClick={load}>
             <RefreshCw className="size-3.5" />

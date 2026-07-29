@@ -37,13 +37,16 @@ export function AppSidebar({
 }: {
   activePage: string;
   onNavigate: (page: string) => void;
-  session: { user: string; full_name?: string; company?: string; role_type?: string; branding?: { brand_name: string; brand_subtitle: string; logo: string | null } } | null;
+  session: { user: string; full_name?: string; company?: string; companies?: string[]; role_type?: string; branding?: { brand_name: string; brand_subtitle: string; logo: string | null } } | null;
   onLogout: () => void;
   mobileOpen: boolean;
   setMobileOpen: (open: boolean) => void;
   availablePages: string[];
 }) {
   const companyName = session?.company || session?.branding?.brand_name || "Xperts Global";
+  const companyContext = session?.companies && session.companies.length > 1
+    ? `${companyName} + ${session.companies.length - 1}`
+    : companyName;
   const navItems = ALL_NAV_ITEMS.filter((item) => availablePages.includes(item.id));
 
   const sidebar = (
@@ -84,7 +87,7 @@ export function AppSidebar({
       <div className="border-t border-sidebar-border p-3">
         <div className="mb-2 rounded-lg bg-sidebar-accent/50 px-3 py-2 text-start">
           <div className="truncate text-xs font-medium text-sidebar-foreground">{session?.full_name || session?.user || "Guest"}</div>
-          <div className="truncate text-[10px] text-sidebar-foreground/60">{companyName}</div>
+          <div className="truncate text-[10px] text-sidebar-foreground/60">{companyContext}</div>
         </div>
         <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" onClick={onLogout}>
           <LogOut className="size-3.5" />
