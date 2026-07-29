@@ -7,7 +7,6 @@ import {
   Menu,
   X,
   UserRound,
-  Building2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -22,7 +21,6 @@ export type NavItem = {
 const ALL_NAV_ITEMS: NavItem[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "locations", label: "Locations", icon: MapPin },
-  { id: "company", label: "Company", icon: Building2 },
   { id: "users", label: "Users", icon: Users },
   { id: "settings", label: "Settings", icon: Settings },
   { id: "profile", label: "Profile", icon: UserRound },

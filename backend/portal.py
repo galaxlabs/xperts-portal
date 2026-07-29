@@ -102,7 +102,7 @@ def get_portal_config():
 		["company", "role_type"], as_dict=True)
 
 	branding = _get_branding(company)
-	available_pages = ["dashboard", "locations", "company", "settings", "profile"]
+	available_pages = ["dashboard", "locations", "settings", "profile"]
 	if is_manager:
 		available_pages.append("users")
 

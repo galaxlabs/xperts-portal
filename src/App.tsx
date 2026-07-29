@@ -9,18 +9,16 @@ import { ErrorBoundary } from "@/components/shared/error-boundary";
 import { LoginPage } from "@/features/auth/login-page";
 import { DashboardPage } from "@/features/dashboard/dashboard-page";
 import { LocationsPage } from "@/features/locations/locations-page";
-import { CompanyPage } from "@/features/company/company-page";
 import { UsersPage } from "@/features/users/users-page";
 import { SettingsPage } from "@/features/settings/settings-page";
 import { getBranding } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
 
-type PageId = "dashboard" | "locations" | "company" | "users" | "settings" | "profile";
+type PageId = "dashboard" | "locations" | "users" | "settings" | "profile";
 
 const PAGE_TITLES: Record<string, string> = {
   dashboard: "Dashboard",
   locations: "Locations",
-  company: "Company Profile",
   users: "Portal Users",
   settings: "Settings",
   profile: "Profile",
@@ -100,7 +98,6 @@ export default function App() {
     switch (activePage) {
       case "dashboard": return <DashboardPage />;
       case "locations": return <LocationsPage />;
-      case "company": return <CompanyPage />;
       case "users": return <UsersPage />;
       case "settings": return <SettingsPage theme={theme} onThemeChange={setTheme} />;
       case "profile": return <SettingsPage theme={theme} onThemeChange={setTheme} />;

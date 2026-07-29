@@ -3,10 +3,8 @@ import { Settings, Moon, Sun, Monitor, KeyRound, Eye, EyeOff, LoaderCircle } fro
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import { call } from "@/lib/api";
 import { toast } from "sonner";
-import { useAuth } from "@/hooks/use-auth";
 
 type ThemeMode = "light" | "dark" | "system";
 
@@ -17,8 +15,6 @@ export function SettingsPage({
   theme: ThemeMode;
   onThemeChange: (mode: ThemeMode) => void;
 }) {
-  const { session } = useAuth();
-
   const modes: { mode: ThemeMode; icon: typeof Sun; label: string }[] = [
     { mode: "light", icon: Sun, label: "Light" },
     { mode: "dark", icon: Moon, label: "Dark" },
@@ -52,11 +48,6 @@ export function SettingsPage({
                 </Button>
               ))}
             </div>
-          </div>
-          <Separator />
-          <div>
-            <p className="text-sm font-medium">Portal Version</p>
-            <p className="text-xs text-muted-foreground mt-1">{session?.branding?.brand_name || "Xperts Global CRM"} Portal v1.0.0</p>
           </div>
         </CardContent>
       </Card>
