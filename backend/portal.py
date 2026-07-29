@@ -9,6 +9,18 @@ TRANSITIONS = {
 	},
 	"Approved": {
 		"actions": {
+			"send_agreement": {"to": "Agreement Sent"},
+			"reject": {"to": "Rejected"},
+		},
+	},
+	"Agreement Sent": {
+		"actions": {
+			"request_signature": {"to": "Pending Sign"},
+			"reject": {"to": "Rejected"},
+		},
+	},
+	"Pending Sign": {
+		"actions": {
 			"sign": {"to": "Signed"},
 			"reject": {"to": "Rejected"},
 		},
@@ -26,10 +38,23 @@ TRANSITIONS = {
 	},
 	"Rejected": {
 		"actions": {
-			"reopen": {"to": "Pending Review"},
+			"reopen": {"to": "Pending"},
 		},
 	},
 }
+
+WORKFLOW_TO_PORTAL = {
+	"Pending": "Pending Review",
+	"Approved": "Approved",
+	"Rejected": "Rejected",
+	"Agreement Sent": "Agreement Sent",
+	"Pending Sign": "Pending Sign",
+	"Signed": "Signed",
+	"Installed": "Installed",
+	"Live": "Live",
+	"Cancelled": "Cancelled",
+}
+PORTAL_TO_WORKFLOW = {portal: workflow for workflow, portal in WORKFLOW_TO_PORTAL.items()}
 
 
 def _get_user_company():
@@ -42,10 +67,18 @@ def _get_user_company():
 
 
 def _location_filters(company, status=None):
-	filters = [["company", "=", company], ["status", "is", "set"], ["status", "!=", "Draft"]]
+	filters = [["company", "=", company], ["workflow_state", "in", list(WORKFLOW_TO_PORTAL)]]
 	if status:
-		filters.append(["status", "=", status])
+		workflow_state = PORTAL_TO_WORKFLOW.get(status)
+		if not workflow_state:
+			frappe.throw("Unsupported location status.")
+		filters.append(["workflow_state", "=", workflow_state])
 	return filters
+
+
+def _portal_location(row):
+	row["status"] = WORKFLOW_TO_PORTAL.get(row.pop("workflow_state", None))
+	return row
 
 
 @frappe.whitelist(allow_guest=True)
@@ -107,13 +140,14 @@ def get_dashboard():
 	company = _get_user_company()
 	filters = _location_filters(company)
 
-	all_leads = frappe.get_all("ATM Leads", fields=["status"], filters=filters)
+	all_leads = frappe.get_all("ATM Leads", fields=["workflow_state"], filters=filters)
 	status_counts = {}
 	for l in all_leads:
-		status_counts[l["status"]] = status_counts.get(l["status"], 0) + 1
+		status = WORKFLOW_TO_PORTAL[l["workflow_state"]]
+		status_counts[status] = status_counts.get(status, 0) + 1
 
 	recent = frappe.get_all("ATM Leads",
-		fields=["name", "business_name", "owner_name", "full_address", "city", "state", "status", "creation", "modified"],
+		fields=["name", "business_name", "owner_name", "full_address", "city", "state", "workflow_state", "creation", "modified"],
 		filters=filters,
 		order_by="modified desc",
 		limit=10,
@@ -124,7 +158,7 @@ def get_dashboard():
 			"total": len(all_leads),
 			"by_status": status_counts,
 		},
-		"recent": recent,
+		"recent": [_portal_location(row) for row in recent],
 	}
 
 
@@ -134,12 +168,12 @@ def list_locations(limit: int = 50, status: str = None):
 	filters = _location_filters(company, status)
 
 	rows = frappe.get_all("ATM Leads",
-		fields=["name", "business_name", "owner_name", "full_address", "city", "state", "zip_code", "status", "creation", "modified"],
+		fields=["name", "business_name", "owner_name", "full_address", "city", "state", "zip_code", "workflow_state", "creation", "modified"],
 		filters=filters,
 		order_by="modified desc",
 		limit_page_length=min(int(limit), 200),
 	)
-	return {"rows": rows}
+	return {"rows": [_portal_location(row) for row in rows]}
 
 
 @frappe.whitelist()
@@ -148,7 +182,7 @@ def get_location(name: str):
 	doc = frappe.get_doc("ATM Leads", name)
 	if company and doc.company != company:
 		frappe.throw("Not permitted", frappe.PermissionError)
-	return doc.as_dict()
+	return _portal_location(doc.as_dict())
 
 
 @frappe.whitelist()
@@ -179,7 +213,7 @@ def execute_action(doctype: str, name: str, action: str, install_date: str = Non
 	if company and doc.company != company:
 		frappe.throw("Not permitted", frappe.PermissionError)
 
-	current = doc.status
+	current = WORKFLOW_TO_PORTAL.get(doc.workflow_state)
 	config = TRANSITIONS.get(current)
 	if not config or action not in config.get("actions", {}):
 		frappe.throw(f"Action '{action}' not available from status '{current}'")
@@ -189,7 +223,7 @@ def execute_action(doctype: str, name: str, action: str, install_date: str = Non
 		if not install_date:
 			frappe.throw("An installation date is required.")
 		doc.install_date = install_date
-	doc.status = action_def["to"]
+	doc.workflow_state = action_def["to"]
 	doc.save(ignore_permissions=True)
 	frappe.db.commit()
-	return {"name": doc.name, "status": doc.status, "message": "Installation scheduled" if action == "install" else "Location updated"}
+	return {"name": doc.name, "status": WORKFLOW_TO_PORTAL[doc.workflow_state], "message": "Installation scheduled" if action == "install" else "Location updated"}

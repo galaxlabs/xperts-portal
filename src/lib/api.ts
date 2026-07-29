@@ -108,7 +108,7 @@ export async function getSession() {
       };
       available_pages?: string[];
       dashboard_method?: string;
-    }>("cclms.api.portal_api.get_portal_config", undefined, { mutation: false }).catch(() => null);
+    }>("cclms.api.portal_api_v2.get_portal_config", undefined, { mutation: false }).catch(() => null);
 
     if (!userResult || !userResult.is_authenticated) return null;
 
@@ -120,7 +120,7 @@ export async function getSession() {
       company: userResult.company,
       is_manager: userResult.is_manager,
       available_pages: portalConfig?.available_pages || [],
-      dashboard_method: "cclms.api.portal_api.get_dashboard",
+      dashboard_method: "cclms.api.portal_api_v2.get_dashboard",
       branding: portalConfig?.branding,
     };
   } catch {
@@ -132,7 +132,7 @@ export async function getBranding() {
   try {
     const result = await call<{
       branding?: { brand_name: string; brand_subtitle: string; logo: string | null; primary_color: string; secondary_color: string };
-    }>("cclms.api.portal_api.get_portal_config", undefined, { mutation: false });
+    }>("cclms.api.portal_api_v2.get_portal_config", undefined, { mutation: false });
     return result?.branding || null;
   } catch {
     return null;

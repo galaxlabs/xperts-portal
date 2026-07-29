@@ -54,7 +54,7 @@ export function LeadDetailDialog({
     setEdits({});
     setScheduleInstall(false);
     try {
-      const leadRes = await call<any>("cclms.api.portal_api.get_location", { name });
+      const leadRes = await call<any>("cclms.api.portal_api_v2.get_location", { name });
       setData(leadRes);
     } catch (err: any) {
       console.error(err);
@@ -67,7 +67,7 @@ export function LeadDetailDialog({
     if (!data || Object.keys(edits).length === 0) return;
     setSaving(true);
     try {
-      await call("cclms.api.portal_api.update_location", {
+      await call("cclms.api.portal_api_v2.update_location", {
         name: data.name,
         data: edits,
       }, { mutation: true });
@@ -90,7 +90,7 @@ export function LeadDetailDialog({
     }
     setSaving(true);
     try {
-      await call("cclms.api.portal_api.execute_action", {
+      await call("cclms.api.portal_api_v2.execute_action", {
         doctype: "ATM Lead",
         name: data.name,
         action: action.action,

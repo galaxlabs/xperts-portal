@@ -21,7 +21,21 @@ const LEAD_TRANSITIONS: Record<string, StatusConfig> = {
   Approved: {
     role: "owner",
     actions: [
-      { action: "sign", label: "Sign Agreement", icon: "file-signature", to_status: "Signed" },
+      { action: "send_agreement", label: "Send Agreement", icon: "file-signature", to_status: "Agreement Sent" },
+      { action: "reject", label: "Reject", icon: "thumbs-down", to_status: "Rejected" },
+    ],
+  },
+  "Agreement Sent": {
+    role: "owner",
+    actions: [
+      { action: "request_signature", label: "Request Signature", icon: "file-signature", to_status: "Pending Sign" },
+      { action: "reject", label: "Reject", icon: "thumbs-down", to_status: "Rejected" },
+    ],
+  },
+  "Pending Sign": {
+    role: "owner",
+    actions: [
+      { action: "sign", label: "Mark Signed", icon: "file-signature", to_status: "Signed" },
       { action: "reject", label: "Reject", icon: "thumbs-down", to_status: "Rejected" },
     ],
   },

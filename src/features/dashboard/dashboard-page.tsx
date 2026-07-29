@@ -99,6 +99,8 @@ export function DashboardPage() {
   const approved = c["Approved"] || 0;
   const signed = c["Signed"] || 0;
   const rejected = c["Rejected"] || 0;
+  const agreementSent = c["Agreement Sent"] || 0;
+  const pendingSign = c["Pending Sign"] || 0;
   const installed = c["Installed"] || 0;
   const live = c["Live"] || 0;
   const cancelled = c["Cancelled"] || 0;
@@ -107,6 +109,8 @@ export function DashboardPage() {
     { label: "Pending Review", value: pendingReview, status: "Pending Review", icon: BarChart3 },
     { label: "Approved", value: approved, status: "Approved", icon: CheckCircle2 },
     { label: "Rejected", value: rejected, status: "Rejected", icon: XCircle },
+    { label: "Agreement Sent", value: agreementSent, status: "Agreement Sent", icon: FileSignature },
+    { label: "Pending Sign", value: pendingSign, status: "Pending Sign", icon: FileSignature },
     { label: "Signed", value: signed, status: "Signed", icon: FileSignature },
     { label: "Installed", value: installed, status: "Installed", icon: Wrench },
     { label: "Live", value: live, status: "Live", icon: Zap },
