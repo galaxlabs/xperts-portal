@@ -10,18 +10,6 @@ TRANSITIONS = {
 	},
 	"Approved": {
 		"actions": {
-			"send_agreement": {"to": "Agreement Sent"},
-			"reject": {"to": "Rejected"},
-		},
-	},
-	"Agreement Sent": {
-		"actions": {
-			"request_signature": {"to": "Pending Sign"},
-			"reject": {"to": "Rejected"},
-		},
-	},
-	"Pending Sign": {
-		"actions": {
 			"sign": {"to": "Signed"},
 			"reject": {"to": "Rejected"},
 		},
@@ -34,7 +22,7 @@ TRANSITIONS = {
 	},
 	"Installed": {
 		"actions": {
-			"go_live": {"to": "Live"},
+			"convert": {"to": "Converted"},
 		},
 	},
 	"Rejected": {
@@ -48,12 +36,9 @@ WORKFLOW_TO_PORTAL = {
 	"Pending": "Pending Review",
 	"Approved": "Approved",
 	"Rejected": "Rejected",
-	"Agreement Sent": "Agreement Sent",
-	"Pending Sign": "Pending Sign",
 	"Signed": "Signed",
 	"Installed": "Installed",
-	"Live": "Live",
-	"Cancelled": "Cancelled",
+	"Converted": "Converted",
 }
 PORTAL_TO_WORKFLOW = {portal: workflow for workflow, portal in WORKFLOW_TO_PORTAL.items()}
 PORTAL_DATA_START_DATE = "2025-08-01"

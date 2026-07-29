@@ -30,12 +30,12 @@ type LocationRecord = {
 
 type Cache = { syncedAt: string; rows: LocationRecord[] };
 
-const STATUSES = ["Pending Review", "Approved", "Rejected", "Agreement Sent", "Pending Sign", "Signed", "Installed", "Live", "Cancelled"];
-const KANBAN_STATUSES = STATUSES.filter((status) => status !== "Cancelled");
+const STATUSES = ["Pending Review", "Approved", "Rejected", "Signed", "Installed", "Converted"];
+const KANBAN_STATUSES = STATUSES;
 const PAGE_SIZE = 25;
 
 function cacheKey(companies: string[]) {
-  return `xperts-location-cache:v2:${companies.slice().sort().join("|")}`;
+  return `xperts-location-cache:v3:${companies.slice().sort().join("|")}`;
 }
 
 function readCache(key: string): Cache | null {
@@ -170,7 +170,7 @@ export function LocationsPage() {
                     <span className="text-center text-xs text-muted-foreground">{(page - 1) * PAGE_SIZE + index + 1}</span>
                     <button className="min-w-0 text-left" onClick={() => setLeadDetail(item.name)}><p className="truncate text-sm font-medium">{item.business_name || item.name}</p><p className="truncate text-xs text-muted-foreground">{item.business_type || "-"} · {item.city || "-"}, {item.state || "-"} · {item.zip_code || "-"}</p></button>
                     <StatusBadge status={item.status} />
-                    <div className="flex gap-1">{actions.slice(0, 2).map((action) => <Button key={action.action} size="sm" variant="outline" disabled={processing === item.name} onClick={() => void handleAction(item, action)}>{action.action === "approve" && <ThumbsUp className="size-3" />}{action.action === "reject" && <ThumbsDown className="size-3" />}{action.action === "install" && <Wrench className="size-3" />}{action.action === "go_live" && <Zap className="size-3" />}{action.action.includes("agreement") && <FileSignature className="size-3" />}{action.label}</Button>)}</div>
+                    <div className="flex gap-1">{actions.slice(0, 2).map((action) => <Button key={action.action} size="sm" variant="outline" disabled={processing === item.name} onClick={() => void handleAction(item, action)}>{action.action === "approve" && <ThumbsUp className="size-3" />}{action.action === "reject" && <ThumbsDown className="size-3" />}{action.action === "install" && <Wrench className="size-3" />}{action.action === "convert" && <Zap className="size-3" />}{action.action === "sign" && <FileSignature className="size-3" />}{action.label}</Button>)}</div>
                   </div>;
                 })}
               </div>

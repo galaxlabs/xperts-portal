@@ -29,8 +29,7 @@ const STATUS_BAR_COLOR: Record<string, string> = {
   Rejected: "from-rose-400 to-red-500",
   Signed: "from-violet-400 to-purple-500",
   Installed: "from-teal-400 to-cyan-500",
-  Live: "from-emerald-400 to-teal-500",
-  Cancelled: "from-gray-400 to-slate-500",
+  Converted: "from-sky-400 to-blue-500",
 };
 
 function StatusPill({ status }: { status: string }) {
@@ -40,9 +39,8 @@ function StatusPill({ status }: { status: string }) {
     Approved: "bg-emerald-100 text-emerald-700 ring-emerald-300",
     Rejected: "bg-rose-100 text-rose-700 ring-rose-300",
     Signed: "bg-violet-100 text-violet-700 ring-violet-300",
-    Live: "bg-emerald-100 text-emerald-700 ring-emerald-300",
+    Converted: "bg-sky-100 text-sky-700 ring-sky-300",
     Installed: "bg-teal-100 text-teal-700 ring-teal-300",
-    Cancelled: "bg-gray-100 text-gray-500 ring-gray-300",
   };
   const cls = colors[label] || "bg-gray-100 text-gray-600 ring-gray-300";
   return <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${cls}`}>{label}</span>;
@@ -133,22 +131,16 @@ export function DashboardPage() {
   const approved = c["Approved"] || 0;
   const signed = c["Signed"] || 0;
   const rejected = c["Rejected"] || 0;
-  const agreementSent = c["Agreement Sent"] || 0;
-  const pendingSign = c["Pending Sign"] || 0;
   const installed = c["Installed"] || 0;
-  const live = c["Live"] || 0;
-  const cancelled = c["Cancelled"] || 0;
+  const converted = c["Converted"] || 0;
   const cards = [
     { label: "Total Locations", value: totalLeads, status: "", icon: MapPin },
     { label: "Pending Review", value: pendingReview, status: "Pending Review", icon: BarChart3 },
     { label: "Approved", value: approved, status: "Approved", icon: CheckCircle2 },
     { label: "Rejected", value: rejected, status: "Rejected", icon: XCircle },
-    { label: "Agreement Sent", value: agreementSent, status: "Agreement Sent", icon: FileSignature },
-    { label: "Pending Sign", value: pendingSign, status: "Pending Sign", icon: FileSignature },
     { label: "Signed", value: signed, status: "Signed", icon: FileSignature },
     { label: "Installed", value: installed, status: "Installed", icon: Wrench },
-    { label: "Live", value: live, status: "Live", icon: Zap },
-    { label: "Cancelled", value: cancelled, status: "Cancelled", icon: XCircle },
+    { label: "Converted", value: converted, status: "Converted", icon: Zap },
   ];
 
   function openLocations(status: string) {
