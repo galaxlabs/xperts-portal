@@ -55,6 +55,7 @@ WORKFLOW_TO_PORTAL = {
 	"Cancelled": "Cancelled",
 }
 PORTAL_TO_WORKFLOW = {portal: workflow for workflow, portal in WORKFLOW_TO_PORTAL.items()}
+PORTAL_DATA_START_DATE = "2025-08-01"
 
 
 def _get_user_companies():
@@ -82,7 +83,11 @@ def _get_user_company():
 
 
 def _location_filters(companies, status=None):
-	filters = [["company", "in", companies], ["workflow_state", "in", list(WORKFLOW_TO_PORTAL)]]
+	filters = [
+		["company", "in", companies],
+		["workflow_state", "in", list(WORKFLOW_TO_PORTAL)],
+		["modified", ">=", PORTAL_DATA_START_DATE],
+	]
 	if status:
 		workflow_state = PORTAL_TO_WORKFLOW.get(status)
 		if not workflow_state:
@@ -235,7 +240,7 @@ def get_dashboard():
 
 
 @frappe.whitelist()
-def list_locations(limit: int = 50, status: str = None):
+def list_locations(page: int = 1, page_size: int = 25, status: str = None, search: str = None):
 	companies = _get_user_companies()
 	filters = _location_filters(companies, status)
 
@@ -243,10 +248,24 @@ def list_locations(limit: int = 50, status: str = None):
 		fields=["name", "business_name", "business_type", "owner_name", "full_address", "city", "state", "state_code", "zip_code", "company", "workflow_state", "creation", "modified"],
 		filters=filters,
 		order_by="modified desc",
-		limit_page_length=1000,
+		limit_page_length=100000,
 	)
 	rows = [row for row in rows if _can_access_location(row, companies)]
-	return {"rows": [_portal_location(row) for row in rows[:min(int(limit), 200)]]}
+	if search:
+		query = search.strip().casefold()
+		rows = [
+			row for row in rows
+			if query in " ".join(str(row.get(field) or "") for field in ("business_name", "full_address", "city", "state", "zip_code")).casefold()
+		]
+	page_size = min(max(int(page_size), 10), 100)
+	page = max(int(page), 1)
+	start = (page - 1) * page_size
+	return {
+		"rows": [_portal_location(row) for row in rows[start:start + page_size]],
+		"total": len(rows),
+		"page": page,
+		"page_size": page_size,
+	}
 
 
 @frappe.whitelist()
@@ -255,7 +274,12 @@ def get_location(name: str):
 	doc = frappe.get_doc("ATM Leads", name)
 	if not _can_access_location(doc, companies):
 		frappe.throw("Not permitted", frappe.PermissionError)
-	return _portal_location(doc.as_dict())
+	data = doc.as_dict()
+	data["state_history"] = [
+		row for row in data.get("state_history", [])
+		if str(row.get("change_datetime") or row.get("creation") or "") >= PORTAL_DATA_START_DATE
+	]
+	return _portal_location(data)
 
 
 @frappe.whitelist()
