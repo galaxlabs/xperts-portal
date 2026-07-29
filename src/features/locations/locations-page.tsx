@@ -52,7 +52,7 @@ export function LocationsPage() {
     setLoading(true);
     try {
       const result = await call<{ rows: LocationRecord[] }>(
-        "cclms.api.portal_api_v2.list_locations",
+        "cclms.api.portal_api_v3.list_locations",
         { limit: 100, status: statusFilter === "all" ? undefined : statusFilter },
         { mutation: false }
       );
@@ -72,7 +72,7 @@ export function LocationsPage() {
     setProcessing(item.name);
     try {
       const result = await call<{ success: boolean; message: string }>(
-        "cclms.api.portal_api_v2.execute_action",
+        "cclms.api.portal_api_v3.execute_action",
         { doctype: "ATM Lead", name: item.name, action: action.action },
         { mutation: true }
       );

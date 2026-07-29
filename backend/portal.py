@@ -219,11 +219,13 @@ def execute_action(doctype: str, name: str, action: str, install_date: str = Non
 		frappe.throw(f"Action '{action}' not available from status '{current}'")
 
 	action_def = config["actions"][action]
+	updates = {"workflow_state": action_def["to"]}
 	if action == "install":
 		if not install_date:
 			frappe.throw("An installation date is required.")
-		doc.install_date = install_date
-	doc.workflow_state = action_def["to"]
-	doc.save(ignore_permissions=True)
+		updates["install_date"] = install_date
+	# Desk permissions do not grant Portal User access to ATM Leads. The company
+	# check above is the authorization boundary for this purpose-built portal API.
+	frappe.db.set_value("ATM Leads", doc.name, updates, update_modified=True)
 	frappe.db.commit()
-	return {"name": doc.name, "status": WORKFLOW_TO_PORTAL[doc.workflow_state], "message": "Installation scheduled" if action == "install" else "Location updated"}
+	return {"name": doc.name, "status": WORKFLOW_TO_PORTAL[action_def["to"]], "message": "Installation scheduled" if action == "install" else "Location updated"}
