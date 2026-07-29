@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 860" fill="none">
+  <rect width="720" height="860" fill="#17171D"/>
+  <path d="M-28 183C125 97 218 302 355 213c143-93 207-15 391-113" stroke="#69E0B1" stroke-opacity=".3" stroke-width="2"/>
+  <path d="M-10 617c125-57 174 89 294 26 134-70 237 75 465-33" stroke="#8E8CFF" stroke-opacity=".32" stroke-width="2"/>
+  <path d="M72 110 645 752M645 106 81 760" stroke="#fff" stroke-opacity=".05" stroke-width="1"/>
+  <circle cx="527" cy="212" r="136" stroke="#fff" stroke-opacity=".08"/>
+  <circle cx="527" cy="212" r="92" stroke="#69E0B1" stroke-opacity=".16"/>
+  <circle cx="180" cy="650" r="95" stroke="#8E8CFF" stroke-opacity=".16"/>
+  <rect x="172" y="325" width="376" height="210" rx="30" fill="#24242C" stroke="#fff" stroke-opacity=".1"/>
+  <rect x="204" y="357" width="70" height="70" rx="21" fill="#69E0B1"/>
+  <path d="M222 373h11l4 9 4-9h11l-10 19 10 19h-11l-4-10-4 10h-11l10-19-10-19Z" fill="#17171D"/>
+  <text x="204" y="466" fill="white" font-family="Arial, sans-serif" font-size="30" font-weight="700">Xperts Global</text>
+  <text x="204" y="497" fill="#A4A4AD" font-family="Arial, sans-serif" font-size="17">Location Intelligence</text>
+</svg>

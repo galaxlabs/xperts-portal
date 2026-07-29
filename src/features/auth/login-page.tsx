@@ -34,15 +34,19 @@ export function LoginPage({
   const displayError = localError || error;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-zinc-50 via-white to-zinc-50/50 px-4 dark:from-zinc-950/20 dark:via-background dark:to-zinc-950/10">
+    <div className="grid min-h-screen lg:grid-cols-2">
+      <aside className="relative hidden overflow-hidden bg-[#17171D] p-12 lg:flex lg:flex-col lg:justify-between">
+        <img src="/xperts-splash.svg" alt="Xperts Global location intelligence" className="absolute inset-0 size-full object-cover opacity-80" />
+        <div className="relative flex items-center gap-3 text-white"><img src="/xperts-mark.svg" alt="" className="size-11" /><span className="text-lg font-semibold">Xperts Global</span></div>
+        <div className="relative"><p className="max-w-sm text-4xl font-semibold leading-tight text-white">Move every location from prospect to performance.</p><p className="mt-4 text-sm text-zinc-400">A focused workspace for your ATM location portfolio.</p></div>
+      </aside>
+      <div className="flex items-center justify-center bg-gradient-to-br from-zinc-50 via-white to-zinc-50/50 px-4 dark:from-zinc-950/20 dark:via-background dark:to-zinc-950/10">
       <Card className="w-full max-w-sm border-0 shadow-2xl ring-1 ring-foreground/5">
         <CardHeader className="items-center text-center pt-8">
-          <div className="mb-3 flex size-14 items-center justify-center rounded-2xl bg-[#1F1F25] text-white shadow-lg">
-            <span className="text-xl font-bold">X</span>
-          </div>
-          <CardTitle className="text-xl">{branding?.brand_name || "Xperts Global CRM"}</CardTitle>
+          <img src="/xperts-mark.svg" alt="Xperts Global" className="mb-3 size-14 rounded-2xl shadow-lg" />
+          <CardTitle className="text-xl">Xperts Global CRM</CardTitle>
           <CardDescription>
-            {branding?.brand_subtitle || "Location Intelligence"}
+            {branding?.brand_name ? `${branding.brand_name} · Location Intelligence` : "Location Intelligence"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -63,6 +67,7 @@ export function LoginPage({
           </form>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

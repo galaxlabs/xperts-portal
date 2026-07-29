@@ -58,6 +58,10 @@ export default function App() {
   }, [isDark, theme]);
 
   useEffect(() => {
+    document.title = session?.company ? `${session.company} | Xperts Global` : "Xperts Global CRM";
+  }, [session?.company]);
+
+  useEffect(() => {
     if (availablePages.length > 0 && !availablePages.includes(activePage)) {
       setActivePage("dashboard");
     }
@@ -121,7 +125,7 @@ export default function App() {
 
       <div className="md:ps-60">
         <AppHeader
-          title={PAGE_TITLES[activePage] || activePage}
+          title={activePage === "dashboard" ? `Welcome, ${session.full_name || session.user}` : PAGE_TITLES[activePage] || activePage}
           onOpenMobile={() => setMobileOpen(true)}
           onToggleDark={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
           dark={isDark}
