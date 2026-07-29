@@ -122,7 +122,7 @@ export default function App() {
 
       <div className="md:ps-60">
         <AppHeader
-          title={activePage === "dashboard" ? `Welcome, ${session.full_name || session.user}` : PAGE_TITLES[activePage] || activePage}
+          title={activePage === "dashboard" ? `Welcome, ${session.company || "Xperts Global"}` : PAGE_TITLES[activePage] || activePage}
           onOpenMobile={() => setMobileOpen(true)}
           onToggleDark={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
           dark={isDark}

@@ -127,7 +127,7 @@ export function DashboardPage() {
       <div className="rounded-2xl bg-gradient-to-br from-zinc-800 via-zinc-900 to-black p-6 text-white shadow-lg">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-xl font-bold">Welcome back, {session?.full_name || "there"}</h1>
+            <h1 className="text-xl font-bold">Welcome, {session?.company || "Xperts Global"}</h1>
             <p className="mt-1 text-sm text-zinc-400">{session?.company || session?.branding?.brand_name || "Xperts Global"} · Location Intelligence</p>
           </div>
           <Button size="sm" variant="ghost" className="gap-1.5 rounded-xl text-white/70 hover:text-white hover:bg-white/20" onClick={load}>
