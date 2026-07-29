@@ -129,18 +129,6 @@ export function LocationsPage() {
     }
   }
 
-  function onDrop(targetStatus: string, name: string) {
-    const item = rows.find((row) => row.name === name);
-    if (!item || item.status === targetStatus) return;
-    const action = getActions("ATM Lead", item.status, Boolean(session?.is_manager), false, Boolean(session?.user))
-      .find((candidate) => candidate.to_status === targetStatus);
-    if (!action) {
-      toast.error(`A location cannot move directly from ${item.status} to ${targetStatus}.`);
-      return;
-    }
-    void handleAction(item, action);
-  }
-
   if (loading) return <div className="flex justify-center py-20"><LoaderCircle className="size-6 animate-spin text-primary" /></div>;
 
   return (
@@ -163,9 +151,12 @@ export function LocationsPage() {
             <div className="grid gap-3 overflow-x-auto pb-2 xl:grid-cols-4">
               {KANBAN_STATUSES.map((status) => {
                 const items = filteredRows.filter((row) => row.status === status).slice(0, 100);
-                return <div key={status} className="min-h-48 rounded-xl border bg-muted/20 p-3" onDragOver={(event) => event.preventDefault()} onDrop={(event) => onDrop(status, event.dataTransfer.getData("text/plain"))}>
+                return <div key={status} className="min-h-48 rounded-xl border bg-muted/20 p-3">
                   <div className="mb-3 flex items-center justify-between"><StatusBadge status={status} /><span className="text-xs text-muted-foreground">{items.length}</span></div>
-                  <div className="space-y-2">{items.map((item) => <button key={item.name} draggable onDragStart={(event) => event.dataTransfer.setData("text/plain", item.name)} onClick={() => setLeadDetail(item.name)} className="w-full rounded-lg border bg-background p-2 text-left shadow-sm transition hover:border-primary/50"><p className="truncate text-sm font-medium">{item.business_name || item.name}</p><p className="mt-1 truncate text-xs text-muted-foreground">{item.city || "-"}, {item.state || "-"}</p></button>)}</div>
+                  <div className="space-y-2">{items.map((item) => {
+                    const actions = getActions("ATM Lead", item.status, Boolean(session?.is_manager), false, Boolean(session?.user));
+                    return <div key={item.name} className="rounded-lg border bg-background p-2 text-left shadow-sm"><button onClick={() => setLeadDetail(item.name)} className="w-full"><p className="truncate text-sm font-medium">{item.business_name || item.name}</p><p className="mt-1 truncate text-xs text-muted-foreground">{item.city || "-"}, {item.state || "-"}</p></button><div className="mt-2 flex flex-wrap gap-1">{actions.slice(0, 2).map((action) => <Button key={action.action} size="sm" variant="outline" disabled={processing === item.name} onClick={() => void handleAction(item, action)}>{action.label}</Button>)}</div></div>;
+                  })}</div>
                 </div>;
               })}
             </div>
