@@ -3,9 +3,9 @@ from frappe.utils.password import update_password
 
 
 ACTIVE_COMPANIES = {
-	"Athena": "admin@vyntrix.com",
+	"Athena": "athena@vyntrix.com",
 	"Bit Stop": "admin@bitstop.com",
-	"ByteFederal": "admin@vyntrix.com",
+	"ByteFederal": "bytefederal@vyntrix.com",
 	"Coin Works": "admin@coinworks.com",
 	"Crypto Base": "admin@cryptobase.com",
 	"Insta Bit": "admin@instabit.com",
@@ -28,20 +28,6 @@ def run(password):
 	for company in ACTIVE_COMPANIES:
 		frappe.db.set_value("Operator Companies", company, "active", 1, update_modified=False)
 
-	if not frappe.db.exists("User", "admin@vyntrix.com"):
-		user = frappe.get_doc({
-			"doctype": "User",
-			"email": "admin@vyntrix.com",
-			"first_name": "Vyntrix",
-			"full_name": "Admin Vyntrix",
-			"enabled": 1,
-			"user_type": "System User",
-			"send_welcome_email": 0,
-			"roles": [{"role": "Portal User"}],
-		})
-		user.insert(ignore_permissions=True)
-	update_password("admin@vyntrix.com", password)
-
 	retained_users = set(ACTIVE_COMPANIES.values())
 	for profile in frappe.get_all("Portal Profile", fields=["name", "user"]):
 		frappe.db.set_value("Portal Profile", profile.name, "enabled", int(profile.user in retained_users), update_modified=False)
@@ -49,7 +35,8 @@ def run(password):
 			frappe.db.set_value("User", profile.user, "enabled", 0, update_modified=False)
 
 	for user, companies in {
-		"admin@vyntrix.com": ["Athena", "ByteFederal"],
+		"athena@vyntrix.com": ["Athena"],
+		"bytefederal@vyntrix.com": ["ByteFederal"],
 		"admin@bitstop.com": ["Bit Stop"],
 		"admin@coinworks.com": ["Coin Works"],
 		"admin@cryptobase.com": ["Crypto Base"],
