@@ -163,32 +163,43 @@ export function LocationsPage() {
                 <span className="ml-auto">{visibleItems.length} leads</span>
               </div>
 
+              <div className="hidden grid-cols-[1.5rem_minmax(12rem,2fr)_minmax(8rem,1fr)_minmax(7rem,1fr)_minmax(7rem,1fr)_5rem_7rem_11rem] gap-3 border-b py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground lg:grid">
+                <span />
+                <span>Business</span>
+                <span>Business Type</span>
+                <span>City</span>
+                <span>State</span>
+                <span>ZIP</span>
+                <span>Status</span>
+                <span>Actions</span>
+              </div>
+
               <div className="divide-y">
                 {visibleItems.map((item) => {
                   const isOwner = item.submitted_by === currentUser;
                   const actions = getActions("ATM Lead", item.status, isManager, isOwner, Boolean(session?.user));
                   const isProc = processing === item.name;
                   return (
-                    <div key={item.name} className="flex items-center gap-3 py-2.5 hover:bg-muted/30 transition-colors">
+                    <div key={item.name} className="flex items-center gap-3 py-2.5 hover:bg-muted/30 transition-colors lg:grid lg:grid-cols-[1.5rem_minmax(12rem,2fr)_minmax(8rem,1fr)_minmax(7rem,1fr)_minmax(7rem,1fr)_5rem_7rem_11rem]">
                       <button onClick={() => toggleSelect(item.name)} className="shrink-0 hover:text-foreground">
                         {selected.has(item.name) ? <CheckSquare className="size-4 text-zinc-600" /> : <Square className="size-4 text-muted-foreground" />}
                       </button>
 
-                      <button className="min-w-0 flex-1 text-left" onClick={() => setLeadDetail(item.name)}>
-                        <div className="flex items-center gap-2">
-                          <p className="text-sm font-medium">{item.business_name || item.name}</p>
-                          <StatusBadge status={item.status} />
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-0.5">
+                      <button className="min-w-0 flex-1 text-left lg:col-span-1" onClick={() => setLeadDetail(item.name)}>
+                        <p className="truncate text-sm font-medium">{item.business_name || item.name}</p>
+                        <p className="mt-0.5 truncate text-xs text-muted-foreground lg:hidden">
                           {`${item.address_line1 || ""}${item.city ? `, ${item.city}` : ""}${item.state ? `, ${item.state}` : ""}`}
-                          {item.business_type && ` · ${item.business_type}`}
-                          {isManager && item.submitted_by && ` · by ${item.submitted_by}`}
-                          {item.proposed_rent ? ` · $${item.proposed_rent}/mo` : ""}
                         </p>
                       </button>
 
+                      <span className="hidden truncate text-sm text-muted-foreground lg:block">{item.business_type || "-"}</span>
+                      <span className="hidden truncate text-sm text-muted-foreground lg:block">{item.city || "-"}</span>
+                      <span className="hidden truncate text-sm text-muted-foreground lg:block">{item.state || "-"}</span>
+                      <span className="hidden text-sm text-muted-foreground lg:block">{item.zip_code || "-"}</span>
+                      <div className="hidden lg:block"><StatusBadge status={item.status} /></div>
+
                       {actions.length > 0 && (
-                        <div className="flex items-center gap-1 shrink-0">
+                        <div className="flex shrink-0 items-center gap-1 lg:justify-end">
                           {actions.slice(0, 2).map((actionDef) => (
                             <Button
                               key={actionDef.action}

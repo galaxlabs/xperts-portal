@@ -168,7 +168,7 @@ def list_locations(limit: int = 50, status: str = None):
 	filters = _location_filters(company, status)
 
 	rows = frappe.get_all("ATM Leads",
-		fields=["name", "business_name", "owner_name", "full_address", "city", "state", "zip_code", "workflow_state", "creation", "modified"],
+		fields=["name", "business_name", "business_type", "owner_name", "full_address", "city", "state", "zip_code", "workflow_state", "creation", "modified"],
 		filters=filters,
 		order_by="modified desc",
 		limit_page_length=min(int(limit), 200),
