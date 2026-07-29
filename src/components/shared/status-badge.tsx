@@ -1,11 +1,12 @@
 import { Badge } from "@/components/ui/badge";
 
 const STATUS_MAP: Record<string, "success" | "warning" | "destructive" | "info" | "secondary" | "default"> = {
-  "Pending Review": "info",
+  "Pending Review": "warning",
   Approved: "success",
   Rejected: "destructive",
   Signed: "success",
   Installed: "info",
+  Converted: "success",
   Live: "success",
   Cancelled: "destructive",
   Draft: "secondary",

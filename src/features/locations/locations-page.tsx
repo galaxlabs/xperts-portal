@@ -34,6 +34,12 @@ const STATUSES = ["Pending Review", "Approved", "Rejected", "Signed", "Installed
 const KANBAN_STATUSES = STATUSES;
 const PAGE_SIZE = 25;
 
+function actionColor(action: string) {
+  if (action === "approve") return "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100";
+  if (action === "reject") return "border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100";
+  return "";
+}
+
 function cacheKey(companies: string[]) {
   return `xperts-location-cache:v3:${companies.slice().sort().join("|")}`;
 }
@@ -155,7 +161,7 @@ export function LocationsPage() {
                   <div className="mb-3 flex items-center justify-between"><StatusBadge status={status} /><span className="text-xs text-muted-foreground">{items.length}</span></div>
                   <div className="space-y-2">{items.map((item) => {
                     const actions = getActions("ATM Lead", item.status, Boolean(session?.is_manager), false, Boolean(session?.user));
-                    return <div key={item.name} className="rounded-lg border bg-background p-2 text-left shadow-sm"><button onClick={() => setLeadDetail(item.name)} className="w-full"><p className="truncate text-sm font-medium">{item.business_name || item.name}</p><p className="mt-1 truncate text-xs text-muted-foreground">{item.city || "-"}, {item.state || "-"}</p></button><div className="mt-2 flex flex-wrap gap-1">{actions.slice(0, 2).map((action) => <Button key={action.action} size="sm" variant="outline" disabled={processing === item.name} onClick={() => void handleAction(item, action)}>{action.label}</Button>)}</div></div>;
+                    return <div key={item.name} className="rounded-lg border bg-background p-2 text-left shadow-sm"><button onClick={() => setLeadDetail(item.name)} className="w-full"><p className="truncate text-sm font-medium">{item.business_name || item.name}</p><p className="mt-1 truncate text-xs text-muted-foreground">{item.city || "-"}, {item.state || "-"}</p></button><div className="mt-2 flex flex-wrap gap-1">{actions.slice(0, 2).map((action) => <Button key={action.action} size="sm" variant="outline" className={actionColor(action.action)} disabled={processing === item.name} onClick={() => void handleAction(item, action)}>{action.label}</Button>)}</div></div>;
                   })}</div>
                 </div>;
               })}
@@ -170,7 +176,7 @@ export function LocationsPage() {
                     <span className="text-center text-xs text-muted-foreground">{(page - 1) * PAGE_SIZE + index + 1}</span>
                     <button className="min-w-0 text-left" onClick={() => setLeadDetail(item.name)}><p className="truncate text-sm font-medium">{item.business_name || item.name}</p><p className="truncate text-xs text-muted-foreground">{item.business_type || "-"} · {item.city || "-"}, {item.state || "-"} · {item.zip_code || "-"}</p></button>
                     <StatusBadge status={item.status} />
-                    <div className="flex gap-1">{actions.slice(0, 2).map((action) => <Button key={action.action} size="sm" variant="outline" disabled={processing === item.name} onClick={() => void handleAction(item, action)}>{action.action === "approve" && <ThumbsUp className="size-3" />}{action.action === "reject" && <ThumbsDown className="size-3" />}{action.action === "install" && <Wrench className="size-3" />}{action.action === "convert" && <Zap className="size-3" />}{action.action === "sign" && <FileSignature className="size-3" />}{action.label}</Button>)}</div>
+                    <div className="flex gap-1">{actions.slice(0, 2).map((action) => <Button key={action.action} size="sm" variant="outline" className={actionColor(action.action)} disabled={processing === item.name} onClick={() => void handleAction(item, action)}>{action.action === "approve" && <ThumbsUp className="size-3" />}{action.action === "reject" && <ThumbsDown className="size-3" />}{action.action === "install" && <Wrench className="size-3" />}{action.action === "convert" && <Zap className="size-3" />}{action.action === "sign" && <FileSignature className="size-3" />}{action.label}</Button>)}</div>
                   </div>;
                 })}
               </div>

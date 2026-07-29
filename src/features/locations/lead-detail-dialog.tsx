@@ -16,7 +16,7 @@ const STATUS_COLORS: Record<string, string> = {
   Signed: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400",
   Live: "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400",
   Installed: "bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-400",
-  Cancelled: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400",
+  Converted: "bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-400",
 };
 
 function StatusBadge({ status }: { status: string }) {
@@ -181,7 +181,7 @@ export function LeadDetailDialog({
                   <Button
                     key={actionDef.action}
                     size="sm"
-                    className="gap-1.5"
+                    className={`gap-1.5 ${actionDef.action === "approve" ? "bg-emerald-600 text-white hover:bg-emerald-700" : actionDef.action === "reject" ? "bg-rose-600 text-white hover:bg-rose-700" : ""}`}
                     disabled={saving}
                     onClick={() => handleAction(actionDef)}
                   >
