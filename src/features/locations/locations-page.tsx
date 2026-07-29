@@ -96,12 +96,12 @@ export function LocationsPage() {
   }
 
   const filteredRows = useMemo(() => {
-    const query = deferredSearch.trim().casefold();
+    const query = deferredSearch.trim().toLowerCase();
     return rows.filter((row) => {
       if (statusFilter !== "all" && row.status !== statusFilter) return false;
       if (!query) return true;
       return [row.business_name, row.full_address, row.city, row.state, row.zip_code]
-        .some((value) => value?.casefold().includes(query));
+        .some((value) => value?.toLowerCase().includes(query));
     });
   }, [rows, statusFilter, deferredSearch]);
   const pageCount = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
