@@ -226,15 +226,16 @@ def get_dashboard():
 	status_counts = {}
 	city_stats = {}
 	zip_stats = {}
+	region_stats = {}
 	for l in all_leads:
 		if not _can_access_location(l, companies):
 			continue
 		status = WORKFLOW_TO_PORTAL[l["workflow_state"]]
 		status_counts[status] = status_counts.get(status, 0) + 1
-		for key, value in (("city", l.city), ("zip_code", l.zip_code)):
+		for key, value in (("city", l.city), ("zip_code", l.zip_code), ("region", l.state)):
 			if not value:
 				continue
-			bucket = city_stats if key == "city" else zip_stats
+			bucket = city_stats if key == "city" else zip_stats if key == "zip_code" else region_stats
 			entry = bucket.setdefault(value, {"label": value, "total": 0, "signed": 0, "installed": 0})
 			entry["total"] += 1
 			entry["signed"] += int(status == "Signed")
@@ -255,6 +256,7 @@ def get_dashboard():
 		"recent": [_portal_location(row) for row in recent if _can_access_location(row, companies)][:10],
 		"city_stats": sorted(city_stats.values(), key=lambda item: item["total"], reverse=True)[:8],
 		"zip_stats": sorted(zip_stats.values(), key=lambda item: item["total"], reverse=True)[:8],
+		"region_stats": sorted(region_stats.values(), key=lambda item: item["total"], reverse=True)[:8],
 	}
 
 

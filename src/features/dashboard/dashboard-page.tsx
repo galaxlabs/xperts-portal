@@ -18,6 +18,7 @@ type DashboardData = {
   recent_locations?: any[];
   city_stats?: LocationStat[];
   zip_stats?: LocationStat[];
+  region_stats?: LocationStat[];
 };
 
 type LocationStat = { label: string; total: number; signed: number; installed: number };
@@ -81,6 +82,23 @@ function LocationAnalytics({ title, data }: { title: string; data: LocationStat[
       <CardContent>{data.length === 0 ? <p className="py-8 text-center text-sm text-muted-foreground">No data yet</p> : <div className="space-y-3">{data.map((item) => <div key={item.label}><div className="mb-1 flex justify-between gap-3 text-sm"><span className="truncate font-medium">{item.label}</span><span className="shrink-0 text-xs text-muted-foreground">{item.total} total · {item.signed} signed · {item.installed} installed</span></div><div className="h-2 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500" style={{ width: `${Math.round((item.total / max) * 100)}%` }} /></div></div>)}</div>}</CardContent>
     </Card>
   );
+}
+
+function ConversionDonut({ data }: { data: LocationStat[] }) {
+  const total = data.reduce((sum, item) => sum + item.total, 0);
+  const signed = data.reduce((sum, item) => sum + item.signed, 0);
+  const installed = data.reduce((sum, item) => sum + item.installed, 0);
+  const signedDegrees = total ? Math.round((signed / total) * 360) : 0;
+  const installedDegrees = total ? Math.round((installed / total) * 360) : 0;
+  const background = `conic-gradient(#8b5cf6 0deg ${signedDegrees}deg, #14b8a6 ${signedDegrees}deg ${signedDegrees + installedDegrees}deg, #e5e7eb ${signedDegrees + installedDegrees}deg 360deg)`;
+  return <Card className="border-0 shadow-sm ring-1 ring-gray-200"><CardHeader className="pb-3"><CardTitle className="text-base">Portfolio Conversion</CardTitle><CardDescription>Signed and installed share of visible locations</CardDescription></CardHeader><CardContent><div className="flex items-center gap-5"><div className="relative grid size-32 shrink-0 place-items-center rounded-full" style={{ background }}><div className="grid size-20 place-items-center rounded-full bg-card text-center"><span className="text-xl font-bold">{total}</span><span className="text-[10px] text-muted-foreground">locations</span></div></div><div className="space-y-2 text-sm"><p><span className="me-2 inline-block size-2 rounded-full bg-violet-500" /> Signed: <b>{signed}</b></p><p><span className="me-2 inline-block size-2 rounded-full bg-teal-500" /> Installed: <b>{installed}</b></p><p><span className="me-2 inline-block size-2 rounded-full bg-gray-200" /> Remaining: <b>{Math.max(0, total - signed - installed)}</b></p></div></div></CardContent></Card>;
+}
+
+function RegionInsights({ data }: { data: LocationStat[] }) {
+  const mostInstalled = data.toSorted((a, b) => b.installed - a.installed)[0];
+  const mostSigned = data.toSorted((a, b) => b.signed - a.signed)[0];
+  const max = Math.max(...data.map((item) => item.total), 1);
+  return <Card className="border-0 shadow-sm ring-1 ring-gray-200"><CardHeader className="pb-3"><CardTitle className="text-base">Regional Leaders</CardTitle><CardDescription>State-level signed and installed performance</CardDescription></CardHeader><CardContent className="space-y-4"><div className="grid grid-cols-2 gap-3"><div className="rounded-xl bg-teal-50 p-3 dark:bg-teal-950/20"><p className="text-xs text-muted-foreground">Most installed</p><p className="mt-1 truncate text-sm font-semibold">{mostInstalled?.label || "-"}</p><p className="text-2xl font-bold text-teal-600">{mostInstalled?.installed || 0}</p></div><div className="rounded-xl bg-violet-50 p-3 dark:bg-violet-950/20"><p className="text-xs text-muted-foreground">Most signed</p><p className="mt-1 truncate text-sm font-semibold">{mostSigned?.label || "-"}</p><p className="text-2xl font-bold text-violet-600">{mostSigned?.signed || 0}</p></div></div><div className="flex flex-wrap items-end gap-2 pt-1">{data.map((item) => <div key={item.label} className="grid place-items-center rounded-full bg-primary/10 text-center text-[10px] font-medium text-primary" style={{ width: `${36 + Math.round((item.total / max) * 44)}px`, height: `${36 + Math.round((item.total / max) * 44)}px` }} title={`${item.label}: ${item.total} total, ${item.signed} signed, ${item.installed} installed`}>{item.label.slice(0, 2).toUpperCase()}<span className="block text-[9px]">{item.total}</span></div>)}</div></CardContent></Card>;
 }
 
 export function DashboardPage() {
@@ -196,6 +214,10 @@ export function DashboardPage() {
       <div className="grid gap-5 xl:grid-cols-2">
         <LocationAnalytics title="City Performance" data={data?.city_stats || []} />
         <LocationAnalytics title="ZIP Code Performance" data={data?.zip_stats || []} />
+      </div>
+      <div className="grid gap-5 xl:grid-cols-2">
+        <LocationAnalytics title="Regional Performance" data={data?.region_stats || []} />
+        <div className="grid gap-5 sm:grid-cols-2"><ConversionDonut data={data?.region_stats || []} /><RegionInsights data={data?.region_stats || []} /></div>
       </div>
     </div>
   );
