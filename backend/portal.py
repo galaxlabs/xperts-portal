@@ -6,40 +6,46 @@ TRANSITIONS = {
 			"approve": {"to": "Approved"},
 			"reject": {"to": "Rejected"},
 		},
-		"role": "manager",
 	},
 	"Approved": {
 		"actions": {
 			"sign": {"to": "Signed"},
 			"reject": {"to": "Rejected"},
 		},
-		"role": "manager",
 	},
 	"Signed": {
 		"actions": {
 			"install": {"to": "Installed"},
 			"cancel": {"to": "Cancelled"},
 		},
-		"role": "manager",
 	},
 	"Installed": {
 		"actions": {
-			"activate": {"to": "Live"},
+			"go_live": {"to": "Live"},
 		},
-		"role": "manager",
 	},
 	"Rejected": {
 		"actions": {
 			"reopen": {"to": "Pending Review"},
 		},
-		"role": "manager",
 	},
 }
 
 
 def _get_user_company():
-	profile = frappe.db.get_value("Portal Profile", {"user": frappe.session.user, "enabled": 1}, "company")
-	return profile
+	if frappe.session.user == "Guest":
+		frappe.throw("Authentication required", frappe.PermissionError)
+	company = frappe.db.get_value("Portal Profile", {"user": frappe.session.user, "enabled": 1}, "company")
+	if not company:
+		frappe.throw("Portal access is not enabled for this user", frappe.PermissionError)
+	return company
+
+
+def _location_filters(company, status=None):
+	filters = [["company", "=", company], ["status", "is", "set"], ["status", "!=", "Draft"]]
+	if status:
+		filters.append(["status", "=", status])
+	return filters
 
 
 @frappe.whitelist(allow_guest=True)
@@ -99,7 +105,7 @@ def _get_branding(company_name):
 @frappe.whitelist()
 def get_dashboard():
 	company = _get_user_company()
-	filters = {"company": company} if company else {}
+	filters = _location_filters(company)
 
 	all_leads = frappe.get_all("ATM Leads", fields=["status"], filters=filters)
 	status_counts = {}
@@ -125,9 +131,7 @@ def get_dashboard():
 @frappe.whitelist()
 def list_locations(limit: int = 50, status: str = None):
 	company = _get_user_company()
-	filters = {"company": company} if company else {}
-	if status:
-		filters["status"] = status
+	filters = _location_filters(company, status)
 
 	rows = frappe.get_all("ATM Leads",
 		fields=["name", "business_name", "owner_name", "full_address", "city", "state", "zip_code", "status", "creation", "modified"],
@@ -167,8 +171,8 @@ def update_location(name: str, data: dict):
 
 
 @frappe.whitelist()
-def execute_action(doctype: str, name: str, action: str):
-	if doctype != "ATM Leads":
+def execute_action(doctype: str, name: str, action: str, install_date: str = None):
+	if doctype not in {"ATM Lead", "ATM Leads"}:
 		frappe.throw("Unsupported doctype.")
 	company = _get_user_company()
 	doc = frappe.get_doc("ATM Leads", name)
@@ -181,7 +185,11 @@ def execute_action(doctype: str, name: str, action: str):
 		frappe.throw(f"Action '{action}' not available from status '{current}'")
 
 	action_def = config["actions"][action]
+	if action == "install":
+		if not install_date:
+			frappe.throw("An installation date is required.")
+		doc.install_date = install_date
 	doc.status = action_def["to"]
 	doc.save(ignore_permissions=True)
 	frappe.db.commit()
-	return {"name": doc.name, "status": doc.status}
+	return {"name": doc.name, "status": doc.status, "message": "Installation scheduled" if action == "install" else "Location updated"}

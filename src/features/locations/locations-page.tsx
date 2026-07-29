@@ -38,7 +38,10 @@ export function LocationsPage() {
   const [leads, setLeads] = useState<LocationRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState(() => {
+    const status = new URLSearchParams(window.location.search).get("status") || "";
+    return STATUSES.includes(status) ? status : "all";
+  });
   const [processing, setProcessing] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [leadDetail, setLeadDetail] = useState<string | null>(null);
@@ -49,8 +52,8 @@ export function LocationsPage() {
     setLoading(true);
     try {
       const result = await call<{ rows: LocationRecord[] }>(
-        "cclms.api.portal.list_locations",
-        { limit: 100, status: statusFilter || undefined },
+        "cclms.api.portal_api.list_locations",
+        { limit: 100, status: statusFilter === "all" ? undefined : statusFilter },
         { mutation: false }
       );
       setLeads(result?.rows || []);
@@ -62,10 +65,14 @@ export function LocationsPage() {
   }
 
   async function handleAction(item: LocationRecord, action: ActionDef) {
+    if (action.action === "install") {
+      setLeadDetail(item.name);
+      return;
+    }
     setProcessing(item.name);
     try {
       const result = await call<{ success: boolean; message: string }>(
-        "cclms.api.portal.execute_action",
+        "cclms.api.portal_api.execute_action",
         { doctype: "ATM Lead", name: item.name, action: action.action },
         { mutation: true }
       );
@@ -98,7 +105,7 @@ export function LocationsPage() {
         r.submitted_by?.toLowerCase().includes(q)
       );
     }
-    if (statusFilter) {
+    if (statusFilter !== "all") {
       items = items.filter((r) => r.status === statusFilter);
     }
     return items;
@@ -128,7 +135,7 @@ export function LocationsPage() {
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-32 rounded-lg h-8 text-xs"><SelectValue placeholder="Status" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value=" ">All statuses</SelectItem>
+              <SelectItem value="all">All statuses</SelectItem>
                 {STATUSES.map((s) => (
                   <SelectItem key={s} value={s}>{s}</SelectItem>
                 ))}
@@ -159,7 +166,7 @@ export function LocationsPage() {
               <div className="divide-y">
                 {visibleItems.map((item) => {
                   const isOwner = item.submitted_by === currentUser;
-                  const actions = getActions("ATM Lead", item.status, isManager, isOwner);
+                  const actions = getActions("ATM Lead", item.status, isManager, isOwner, Boolean(session?.user));
                   const isProc = processing === item.name;
                   return (
                     <div key={item.name} className="flex items-center gap-3 py-2.5 hover:bg-muted/30 transition-colors">

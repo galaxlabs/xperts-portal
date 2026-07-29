@@ -40,6 +40,8 @@ export function LeadDetailDialog({
   const [saving, setSaving] = useState(false);
   const [data, setData] = useState<any>(null);
   const [edits, setEdits] = useState<Record<string, string>>({});
+  const [scheduleInstall, setScheduleInstall] = useState(false);
+  const [installDate, setInstallDate] = useState(() => new Date().toISOString().slice(0, 10));
 
   useEffect(() => {
     if (open && leadName) {
@@ -50,8 +52,9 @@ export function LeadDetailDialog({
   async function loadLead(name: string) {
     setLoading(true);
     setEdits({});
+    setScheduleInstall(false);
     try {
-      const leadRes = await call<any>("cclms.api.portal.get_location", { name });
+      const leadRes = await call<any>("cclms.api.portal_api.get_location", { name });
       setData(leadRes);
     } catch (err: any) {
       console.error(err);
@@ -64,7 +67,7 @@ export function LeadDetailDialog({
     if (!data || Object.keys(edits).length === 0) return;
     setSaving(true);
     try {
-      await call("cclms.api.portal.update_location", {
+      await call("cclms.api.portal_api.update_location", {
         name: data.name,
         data: edits,
       }, { mutation: true });
@@ -81,12 +84,17 @@ export function LeadDetailDialog({
 
   async function handleAction(action: ActionDef) {
     if (!data) return;
+    if (action.action === "install" && !scheduleInstall) {
+      setScheduleInstall(true);
+      return;
+    }
     setSaving(true);
     try {
-      await call("cclms.api.portal.execute_action", {
+      await call("cclms.api.portal_api.execute_action", {
         doctype: "ATM Lead",
         name: data.name,
         action: action.action,
+        ...(action.action === "install" ? { install_date: installDate } : {}),
       }, { mutation: true });
       await loadLead(data.name);
       onUpdated();
@@ -104,7 +112,7 @@ export function LeadDetailDialog({
 
   const isOwner = data?.submitted_by === session?.user;
   const isManager = session?.is_manager ?? false;
-  const actions = data ? getActions("ATM Lead", data.status, isManager, isOwner) : [];
+  const actions = data ? getActions("ATM Lead", data.status, isManager, isOwner, Boolean(session?.user)) : [];
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
@@ -181,6 +189,18 @@ export function LeadDetailDialog({
                     {actionDef.label}
                   </Button>
                 ))}
+                {scheduleInstall && (
+                  <div className="flex w-full flex-wrap items-end gap-2 rounded-lg border bg-muted/30 p-3">
+                    <label className="flex flex-col gap-1 text-xs font-medium">
+                      Installation date
+                      <Input type="date" value={installDate} onChange={(e) => setInstallDate(e.target.value)} className="h-8" required />
+                    </label>
+                    <Button size="sm" disabled={saving || !installDate} onClick={() => handleAction({ action: "install", label: "Schedule Installation", icon: "wrench", to_status: "Installed" })}>
+                      Schedule Installation
+                    </Button>
+                    <Button size="sm" variant="ghost" disabled={saving} onClick={() => setScheduleInstall(false)}>Cancel</Button>
+                  </div>
+                )}
                 {Object.keys(edits).length > 0 && (
                   <Button size="sm" variant="default" className="gap-1.5" disabled={saving} onClick={handleSave}>
                     {saving && <LoaderCircle className="size-3 animate-spin" />}

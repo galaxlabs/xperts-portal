@@ -65,6 +65,7 @@ export function getActions(
   const config = doctypeTransitions[status];
   if (!config) return [];
 
+  if (isPortalUser) return config.actions;
   if (config.role === "manager" && !isManager && !isPortalUser) return [];
   if (config.role === "owner" && !isManager && !isOwner) return [];
 

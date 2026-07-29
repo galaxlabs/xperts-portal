@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import {
-  LoaderCircle, MapPin, TrendingUp, RefreshCw,
+  LoaderCircle, MapPin, RefreshCw,
   BarChart3, CheckCircle2, XCircle, FileSignature, Wrench, Zap,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -99,7 +99,25 @@ export function DashboardPage() {
   const approved = c["Approved"] || 0;
   const signed = c["Signed"] || 0;
   const rejected = c["Rejected"] || 0;
+  const installed = c["Installed"] || 0;
   const live = c["Live"] || 0;
+  const cancelled = c["Cancelled"] || 0;
+  const cards = [
+    { label: "Total Locations", value: totalLeads, status: "", icon: MapPin },
+    { label: "Pending Review", value: pendingReview, status: "Pending Review", icon: BarChart3 },
+    { label: "Approved", value: approved, status: "Approved", icon: CheckCircle2 },
+    { label: "Rejected", value: rejected, status: "Rejected", icon: XCircle },
+    { label: "Signed", value: signed, status: "Signed", icon: FileSignature },
+    { label: "Installed", value: installed, status: "Installed", icon: Wrench },
+    { label: "Live", value: live, status: "Live", icon: Zap },
+    { label: "Cancelled", value: cancelled, status: "Cancelled", icon: XCircle },
+  ];
+
+  function openLocations(status: string) {
+    const params = new URLSearchParams({ page: "locations" });
+    if (status) params.set("status", status);
+    window.location.assign(`/?${params.toString()}`);
+  }
 
   return (
     <div className="space-y-6">
@@ -114,32 +132,13 @@ export function DashboardPage() {
           </Button>
         </div>
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <div className="rounded-xl bg-white/10 p-3 text-center backdrop-blur">
-            <p className="text-2xl font-bold">{totalLeads}</p>
-            <p className="text-xs text-zinc-400">Total Leads</p>
-          </div>
-          <div className="rounded-xl bg-white/10 p-3 text-center backdrop-blur">
-            <p className="text-2xl font-bold">{pendingReview}</p>
-            <p className="text-xs text-zinc-400">Pending Review</p>
-          </div>
-          <div className="rounded-xl bg-white/10 p-3 text-center backdrop-blur">
-            <p className="text-2xl font-bold">{approved}</p>
-            <p className="text-xs text-zinc-400">Approved</p>
-          </div>
-          <div className="rounded-xl bg-white/10 p-3 text-center backdrop-blur">
-            <p className="text-2xl font-bold">{signed}</p>
-            <p className="text-xs text-zinc-400">Signed</p>
-          </div>
-        </div>
-        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <div className="rounded-xl bg-white/5 p-3 text-center backdrop-blur">
-            <p className="text-2xl font-bold">{rejected}</p>
-            <p className="text-xs text-zinc-400">Rejected</p>
-          </div>
-          <div className="rounded-xl bg-white/5 p-3 text-center backdrop-blur">
-            <p className="text-2xl font-bold">{live}</p>
-            <p className="text-xs text-zinc-400">Live</p>
-          </div>
+          {cards.map(({ label, value, status, icon: Icon }) => (
+            <button key={label} type="button" onClick={() => openLocations(status)} className="rounded-xl bg-white/10 p-3 text-center backdrop-blur transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+              <Icon className="mx-auto mb-1 size-3.5 text-zinc-400" />
+              <p className="text-2xl font-bold">{value}</p>
+              <p className="text-xs text-zinc-400">{label}</p>
+            </button>
+          ))}
         </div>
       </div>
 

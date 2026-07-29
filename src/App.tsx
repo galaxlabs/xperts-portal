@@ -36,7 +36,10 @@ function resolveTheme(mode: ThemeMode): boolean {
 
 export default function App() {
   const { session, loading: authLoading, login, logout } = useAuth();
-  const [activePage, setActivePage] = useState<PageId>("dashboard");
+  const [activePage, setActivePage] = useState<PageId>(() => {
+    const page = new URLSearchParams(window.location.search).get("page");
+    return page && PAGE_TITLES[page] ? page as PageId : "dashboard";
+  });
   const [mobileOpen, setMobileOpen] = useState(false);
   const [theme, setTheme] = useState<ThemeMode>(() => (localStorage.getItem("xperts-theme") as ThemeMode) || "dark");
   const [loginError, setLoginError] = useState("");
@@ -105,7 +108,10 @@ export default function App() {
     <div className="min-h-screen bg-gradient-to-br from-zinc-50/40 via-white to-zinc-50/30 dark:from-zinc-950/10 dark:via-background dark:to-zinc-950/5">
       <AppSidebar
         activePage={activePage}
-        onNavigate={(p) => setActivePage(p as PageId)}
+          onNavigate={(p) => {
+            setActivePage(p as PageId);
+            window.history.pushState({}, "", `/?page=${p}`);
+          }}
         session={session}
         onLogout={logout}
         mobileOpen={mobileOpen}
