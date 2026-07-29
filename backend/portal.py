@@ -201,7 +201,7 @@ def update_company_profile(data: dict):
 	if not updates:
 		frappe.throw("No valid business fields provided.")
 	frappe.db.set_value("Operator Companies", company, updates, update_modified=True)
-	frappe.clear_cache(doctype="Operator Companies", name=company)
+	frappe.clear_cache(doctype="Operator Companies")
 	return get_company_profile()
 
 

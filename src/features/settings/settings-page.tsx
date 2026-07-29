@@ -94,6 +94,7 @@ function ChangePasswordCard() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleChange} className="space-y-4">
+          <Input type="text" name="username" autoComplete="username" tabIndex={-1} className="sr-only" aria-hidden="true" />
           <label className="flex flex-col gap-1.5 text-sm font-medium">
             Current Password
             <div className="relative">
