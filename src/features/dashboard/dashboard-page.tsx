@@ -28,6 +28,7 @@ const STATUS_BAR_COLOR: Record<string, string> = {
   Approved: "from-emerald-400 to-green-500",
   Rejected: "from-rose-400 to-red-500",
   Signed: "from-violet-400 to-purple-500",
+  "Signed Rejected": "from-orange-400 to-amber-500",
   Installed: "from-teal-400 to-cyan-500",
   Converted: "from-sky-400 to-blue-500",
 };
@@ -39,6 +40,7 @@ function StatusPill({ status }: { status: string }) {
     Approved: "bg-emerald-100 text-emerald-700 ring-emerald-300",
     Rejected: "bg-rose-100 text-rose-700 ring-rose-300",
     Signed: "bg-violet-100 text-violet-700 ring-violet-300",
+    "Signed Rejected": "bg-orange-100 text-orange-700 ring-orange-300",
     Converted: "bg-sky-100 text-sky-700 ring-sky-300",
     Installed: "bg-teal-100 text-teal-700 ring-teal-300",
   };
@@ -131,6 +133,7 @@ export function DashboardPage() {
   const approved = c["Approved"] || 0;
   const signed = c["Signed"] || 0;
   const rejected = c["Rejected"] || 0;
+  const signedRejected = c["Signed Rejected"] || 0;
   const installed = c["Installed"] || 0;
   const converted = c["Converted"] || 0;
   const cards = [
@@ -138,6 +141,7 @@ export function DashboardPage() {
     { label: "Pending Review", value: pendingReview, status: "Pending Review", icon: BarChart3 },
     { label: "Approved", value: approved, status: "Approved", icon: CheckCircle2 },
     { label: "Rejected", value: rejected, status: "Rejected", icon: XCircle },
+    { label: "Signed Rejected", value: signedRejected, status: "Signed Rejected", icon: XCircle },
     { label: "Signed", value: signed, status: "Signed", icon: FileSignature },
     { label: "Installed", value: installed, status: "Installed", icon: Wrench },
     { label: "Converted", value: converted, status: "Converted", icon: Zap },

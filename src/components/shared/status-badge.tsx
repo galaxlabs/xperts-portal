@@ -5,6 +5,7 @@ const STATUS_MAP: Record<string, "success" | "warning" | "destructive" | "info" 
   Approved: "success",
   Rejected: "destructive",
   Signed: "success",
+  "Signed Rejected": "warning",
   Installed: "info",
   Converted: "success",
   Live: "success",

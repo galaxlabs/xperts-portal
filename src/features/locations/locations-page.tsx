@@ -30,7 +30,7 @@ type LocationRecord = {
 
 type Cache = { syncedAt: string; rows: LocationRecord[]; partial?: boolean };
 
-const STATUSES = ["Pending Review", "Approved", "Rejected", "Signed", "Installed", "Converted"];
+const STATUSES = ["Pending Review", "Approved", "Rejected", "Signed", "Signed Rejected", "Installed", "Converted"];
 const KANBAN_STATUSES = STATUSES;
 const PAGE_SIZE = 25;
 const CACHE_ROW_LIMIT = 1_000;

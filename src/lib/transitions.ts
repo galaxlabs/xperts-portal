@@ -28,6 +28,7 @@ const LEAD_TRANSITIONS: Record<string, StatusConfig> = {
     role: "manager",
     actions: [
       { action: "install", label: "Mark Installed", icon: "wrench", to_status: "Installed" },
+      { action: "reject", label: "Sign Reject", icon: "thumbs-down", to_status: "Signed Rejected" },
       { action: "cancel", label: "Cancel", icon: "x-circle", to_status: "Cancelled" },
     ],
   },

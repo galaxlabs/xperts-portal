@@ -14,6 +14,7 @@ const STATUS_COLORS: Record<string, string> = {
   Approved: "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400",
   Rejected: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400",
   Signed: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400",
+  "Signed Rejected": "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400",
   Live: "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400",
   Installed: "bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-400",
   Converted: "bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-400",
