@@ -144,7 +144,7 @@ export function DashboardPage() {
     { label: "Signed Rejected", value: signedRejected, status: "Signed Rejected", icon: XCircle },
     { label: "Signed", value: signed, status: "Signed", icon: FileSignature },
     { label: "Installed", value: installed, status: "Installed", icon: Wrench },
-    { label: "Converted", value: converted, status: "Converted", icon: Zap },
+    ...(converted > 0 ? [{ label: "Converted", value: converted, status: "Converted", icon: Zap }] : []),
   ];
 
   function openLocations(status: string) {
