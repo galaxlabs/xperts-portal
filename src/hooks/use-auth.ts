@@ -18,6 +18,7 @@ export type SessionUser = {
     primary_color: string;
     secondary_color: string;
   };
+  reject_reason_options?: string[];
 };
 
 export function useAuth() {

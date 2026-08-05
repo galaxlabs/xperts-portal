@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { getActions, type ActionDef } from "@/lib/transitions";
 import { useAuth } from "@/hooks/use-auth";
 import { LeadDetailDialog } from "./lead-detail-dialog";
+import { RejectReasonDialog } from "./reject-reason-dialog";
 
 type LocationRecord = {
   name: string;
@@ -90,6 +91,7 @@ export function LocationsPage() {
   const [view, setView] = useState<"list" | "kanban">("list");
   const [processing, setProcessing] = useState<string | null>(null);
   const [leadDetail, setLeadDetail] = useState<string | null>(null);
+  const [rejectTarget, setRejectTarget] = useState<{ name: string; action: string; toStatus: string } | null>(null);
   const companies = session?.companies || (session?.company ? [session.company] : []);
 
   useEffect(() => { void sync(); }, [session?.user]);
@@ -151,6 +153,10 @@ export function LocationsPage() {
     if (action.action === "install") {
       setLeadDetail(item.name);
       toast.message("Choose an installation date in the location details.");
+      return;
+    }
+    if (action.action === "reject" && (action.to_status === "Rejected" || action.to_status === "Signed Rejected")) {
+      setRejectTarget({ name: item.name, action: action.action, toStatus: action.to_status });
       return;
     }
     setProcessing(item.name);
@@ -222,6 +228,15 @@ export function LocationsPage() {
         </CardContent>
       </Card>
       <LeadDetailDialog leadName={leadDetail} open={!!leadDetail} onClose={() => setLeadDetail(null)} onUpdated={sync} />
+      <RejectReasonDialog
+        leadName={rejectTarget?.name || ""}
+        action={rejectTarget?.action || "reject"}
+        toStatus={rejectTarget?.toStatus || "Rejected"}
+        reasonOptions={session?.reject_reason_options}
+        open={!!rejectTarget}
+        onClose={() => setRejectTarget(null)}
+        onDone={() => { setRejectTarget(null); void sync(); }}
+      />
     </div>
   );
 }

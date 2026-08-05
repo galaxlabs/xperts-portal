@@ -8,6 +8,7 @@ import { call } from "@/lib/api";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { getActions, type ActionDef } from "@/lib/transitions";
+import { RejectReasonDialog } from "./reject-reason-dialog";
 
 const STATUS_COLORS: Record<string, string> = {
   "Pending Review": "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400",
@@ -43,6 +44,8 @@ export function LeadDetailDialog({
   const [edits, setEdits] = useState<Record<string, string>>({});
   const [scheduleInstall, setScheduleInstall] = useState(false);
   const [installDate, setInstallDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [rejectOpen, setRejectOpen] = useState(false);
+  const [rejectAction, setRejectAction] = useState<ActionDef | null>(null);
 
   useEffect(() => {
     if (open && leadName) {
@@ -89,6 +92,11 @@ export function LeadDetailDialog({
       setScheduleInstall(true);
       return;
     }
+    if (action.action === "reject" && (action.to_status === "Rejected" || action.to_status === "Signed Rejected")) {
+      setRejectAction(action);
+      setRejectOpen(true);
+      return;
+    }
     setSaving(true);
     try {
       await call("cclms.api.portal_api_v3.execute_action", {
@@ -119,6 +127,7 @@ export function LeadDetailDialog({
   const mapUrl = hasCoordinates ? `https://www.google.com/maps?q=${encodeURIComponent(`${latitude},${longitude}`)}` : "";
 
   return (
+    <>
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         {loading ? (
@@ -179,6 +188,14 @@ export function LeadDetailDialog({
                 </div>
               )}
 
+              {data.reject_reason && (
+                <div className="rounded-lg border border-rose-200 bg-rose-50 p-3 dark:border-rose-900/40 dark:bg-rose-950/20">
+                  <h4 className="mb-1 text-xs font-semibold uppercase tracking-wider text-rose-600">Reject Reason</h4>
+                  <p className="text-sm text-rose-700 dark:text-rose-400">{data.reject_reason}</p>
+                  {data.reject_reason_other && <p className="mt-1 text-sm text-rose-700 dark:text-rose-400">{data.reject_reason_other}</p>}
+                </div>
+              )}
+
               <div>
                 <h4 className="mb-2 text-xs font-semibold uppercase text-muted-foreground tracking-wider">Notes</h4>
                 <Textarea
@@ -232,6 +249,16 @@ export function LeadDetailDialog({
           <p className="py-10 text-center text-sm text-muted-foreground">Failed to load location</p>
         )}
       </DialogContent>
-    </Dialog>
+      </Dialog>
+      <RejectReasonDialog
+        leadName={data?.name || ""}
+        action={rejectAction?.action || "reject"}
+        toStatus={rejectAction?.to_status || "Rejected"}
+        reasonOptions={session?.reject_reason_options}
+        open={rejectOpen}
+        onClose={() => setRejectOpen(false)}
+        onDone={() => { setRejectOpen(false); setRejectAction(null); void loadLead(data?.name || ""); onUpdated(); }}
+      />
+    </>
   );
 }

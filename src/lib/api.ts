@@ -109,6 +109,7 @@ export async function getSession() {
       };
       available_pages?: string[];
       dashboard_method?: string;
+      reject_reason_options?: string[];
     }>("cclms.api.portal_api_v3.get_portal_config", undefined, { mutation: false }).catch(() => null);
 
     if (!userResult || !userResult.is_authenticated) return null;
@@ -124,6 +125,7 @@ export async function getSession() {
       available_pages: portalConfig?.available_pages || [],
       dashboard_method: "cclms.api.portal_api_v3.get_dashboard",
       branding: portalConfig?.branding,
+      reject_reason_options: portalConfig?.reject_reason_options || [],
     };
   } catch {
     return null;
