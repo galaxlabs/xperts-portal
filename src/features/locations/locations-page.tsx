@@ -45,7 +45,7 @@ function actionColor(action: string) {
 }
 
 function cacheKey(companies: string[]) {
-  return `${CACHE_PREFIX}v5:${companies.slice().sort().join("|")}`;
+  return `${CACHE_PREFIX}v6:${companies.slice().sort().join("|")}`;
 }
 
 function readCache(key: string): Cache | null {
