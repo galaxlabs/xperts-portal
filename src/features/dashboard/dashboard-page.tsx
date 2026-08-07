@@ -19,6 +19,18 @@ type DashboardData = {
   city_stats?: LocationStat[];
   zip_stats?: LocationStat[];
   region_stats?: LocationStat[];
+  timeseries?: TimePoint[];
+};
+
+type TimePoint = {
+  date: string;
+  total: number;
+  signed: number;
+  installed: number;
+  approved: number;
+  rejected: number;
+  pending: number;
+  signed_rejected: number;
 };
 
 type LocationStat = { label: string; total: number; signed: number; installed: number };
@@ -101,20 +113,56 @@ function RegionInsights({ data }: { data: LocationStat[] }) {
   return <Card className="border-0 shadow-sm ring-1 ring-gray-200"><CardHeader className="pb-3"><CardTitle className="text-base">Regional Leaders</CardTitle><CardDescription>State-level signed and installed performance</CardDescription></CardHeader><CardContent className="space-y-4"><div className="grid grid-cols-2 gap-3"><div className="rounded-xl bg-teal-50 p-3 dark:bg-teal-950/20"><p className="text-xs text-muted-foreground">Most installed</p><p className="mt-1 truncate text-sm font-semibold">{mostInstalled?.label || "-"}</p><p className="text-2xl font-bold text-teal-600">{mostInstalled?.installed || 0}</p></div><div className="rounded-xl bg-violet-50 p-3 dark:bg-violet-950/20"><p className="text-xs text-muted-foreground">Most signed</p><p className="mt-1 truncate text-sm font-semibold">{mostSigned?.label || "-"}</p><p className="text-2xl font-bold text-violet-600">{mostSigned?.signed || 0}</p></div></div><div className="flex flex-wrap items-end gap-2 pt-1">{data.map((item) => <div key={item.label} className="grid place-items-center rounded-full bg-primary/10 text-center text-[10px] font-medium text-primary" style={{ width: `${36 + Math.round((item.total / max) * 44)}px`, height: `${36 + Math.round((item.total / max) * 44)}px` }} title={`${item.label}: ${item.total} total, ${item.signed} signed, ${item.installed} installed`}>{item.label.slice(0, 2).toUpperCase()}<span className="block text-[9px]">{item.total}</span></div>)}</div></CardContent></Card>;
 }
 
+function TimeseriesChart({ points }: { points: TimePoint[] }) {
+  const max = Math.max(...points.map((p) => p.total), 1);
+  return (
+    <Card className="border-0 shadow-sm ring-1 ring-gray-200">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-base"><BarChart3 className="size-4 text-zinc-600" /> Locations Over Time</CardTitle>
+        <CardDescription>Daily submissions by status</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {points.length === 0 ? <p className="py-8 text-center text-sm text-muted-foreground">No data in this range</p> : (
+          <div className="space-y-4">
+            <div className="flex h-40 items-end gap-1">
+              {points.map((p) => (
+                <div key={p.date} className="group relative flex-1">
+                  <div className="flex h-40 flex-col justify-end">
+                    <div className="w-full rounded-t bg-gradient-to-t from-violet-500 to-fuchsia-500" style={{ height: `${Math.max(2, Math.round((p.total / max) * 100))}%` }} title={`${p.date}: ${p.total} total`} />
+                  </div>
+                  <div className="mt-1 hidden text-center text-[9px] text-muted-foreground group-hover:block">{p.date.slice(5)}</div>
+                </div>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+              <span className="inline-flex items-center gap-1"><span className="size-2 rounded-full bg-violet-500" /> Total</span>
+              <span className="inline-flex items-center gap-1"><span className="size-2 rounded-full bg-emerald-500" /> Signed</span>
+              <span className="inline-flex items-center gap-1"><span className="size-2 rounded-full bg-teal-500" /> Installed</span>
+              <span className="inline-flex items-center gap-1"><span className="size-2 rounded-full bg-amber-500" /> Approved</span>
+              <span className="inline-flex items-center gap-1"><span className="size-2 rounded-full bg-rose-500" /> Rejected</span>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export function DashboardPage() {
   const { session } = useAuth();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [rangeDays, setRangeDays] = useState("30");
   const companyContext = session?.companies && session.companies.length > 1
     ? `${session.company} + ${session.companies.length - 1} companies`
     : session?.company || session?.branding?.brand_name || "Xperts Global";
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { void load(rangeDays); }, [rangeDays]);
 
-  async function load() {
+  async function load(range: string) {
     setLoading(true);
     try {
-      const result = await call<DashboardData>("cclms.api.portal_api_v3.get_dashboard", undefined, { mutation: true });
+      const result = await call<DashboardData>("cclms.api.portal_api_v3.get_dashboard", { range_days: range }, { mutation: true });
       setData(result || null);
     } catch (err: any) {
       toast.error(err.message);
@@ -161,9 +209,17 @@ export function DashboardPage() {
             <h1 className="text-xl font-bold">Welcome, {session?.full_name || "there"}</h1>
             <p className="mt-1 text-sm text-zinc-400">{companyContext} · Location Intelligence</p>
           </div>
-          <Button size="sm" variant="ghost" className="gap-1.5 rounded-xl text-white/70 hover:text-white hover:bg-white/20" onClick={load}>
-            <RefreshCw className="size-3.5" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <select value={rangeDays} onChange={(e) => setRangeDays(e.target.value)} className="h-8 rounded-lg border border-white/20 bg-white/10 px-2 text-xs text-white outline-none focus:border-white/40">
+              <option value="7" className="text-zinc-900">Last 7 days</option>
+              <option value="30" className="text-zinc-900">Last 30 days</option>
+              <option value="60" className="text-zinc-900">Last 60 days</option>
+              <option value="90" className="text-zinc-900">Last 90 days</option>
+            </select>
+            <Button size="sm" variant="ghost" className="gap-1.5 rounded-xl text-white/70 hover:text-white hover:bg-white/20" onClick={() => void load(rangeDays)}>
+              <RefreshCw className="size-3.5" />
+            </Button>
+          </div>
         </div>
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {cards.map(({ label, value, status, icon: Icon }) => (
@@ -175,6 +231,8 @@ export function DashboardPage() {
           ))}
         </div>
       </div>
+
+      <TimeseriesChart points={data?.timeseries || []} />
 
       <div className="grid gap-5 lg:grid-cols-2">
         <Card className="border-0 shadow-sm ring-1 ring-gray-200">

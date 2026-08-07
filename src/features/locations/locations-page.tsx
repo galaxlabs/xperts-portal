@@ -25,6 +25,9 @@ type LocationRecord = {
   state_code?: string;
   zip_code?: string;
   status: string;
+  post_date?: string;
+  reject_reason?: string;
+  reject_reason_other?: string;
   creation?: string;
   modified?: string;
 };
@@ -87,6 +90,8 @@ export function LocationsPage() {
   const [stateFilter, setStateFilter] = useState("all");
   const [zipFilter, setZipFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
   const [page, setPage] = useState(1);
   const [view, setView] = useState<"list" | "kanban">("list");
   const [processing, setProcessing] = useState<string | null>(null);
@@ -133,11 +138,14 @@ export function LocationsPage() {
       if (stateFilter !== "all" && row.state !== stateFilter) return false;
       if (zipFilter !== "all" && row.zip_code !== zipFilter) return false;
       if (typeFilter !== "all" && row.business_type !== typeFilter) return false;
+      const rowDate = (row.post_date || row.creation || "").slice(0, 10);
+      if (fromDate && rowDate && rowDate < fromDate) return false;
+      if (toDate && rowDate && rowDate > toDate) return false;
       const searchable = [row.business_name, row.business_type, row.full_address, row.city, row.state, row.state_code, row.zip_code]
         .filter(Boolean).join(" ").toLowerCase();
       return terms.every((term) => searchable.includes(term));
     });
-  }, [rows, statusFilter, cityFilter, stateFilter, zipFilter, typeFilter, deferredSearch]);
+  }, [rows, statusFilter, cityFilter, stateFilter, zipFilter, typeFilter, fromDate, toDate, deferredSearch]);
   const filterOptions = useMemo(() => ({
     cities: [...new Set(rows.map((row) => row.city).filter((value): value is string => Boolean(value)))].toSorted(),
     states: [...new Set(rows.map((row) => row.state).filter((value): value is string => Boolean(value)))].toSorted(),
@@ -192,6 +200,9 @@ export function LocationsPage() {
             <Select value={stateFilter} onValueChange={(value) => { setStateFilter(value); setPage(1); }}><SelectTrigger className="h-8 w-28 rounded-lg text-xs"><SelectValue placeholder="State" /></SelectTrigger><SelectContent><SelectItem value="all">All states</SelectItem>{filterOptions.states.map((state) => <SelectItem key={state} value={state}>{state}</SelectItem>)}</SelectContent></Select>
             <Select value={zipFilter} onValueChange={(value) => { setZipFilter(value); setPage(1); }}><SelectTrigger className="h-8 w-28 rounded-lg text-xs"><SelectValue placeholder="ZIP" /></SelectTrigger><SelectContent><SelectItem value="all">All ZIP codes</SelectItem>{filterOptions.zipCodes.map((zipCode) => <SelectItem key={zipCode} value={zipCode}>{zipCode}</SelectItem>)}</SelectContent></Select>
             <Select value={typeFilter} onValueChange={(value) => { setTypeFilter(value); setPage(1); }}><SelectTrigger className="h-8 w-36 rounded-lg text-xs"><SelectValue placeholder="Type" /></SelectTrigger><SelectContent><SelectItem value="all">All types</SelectItem>{filterOptions.types.map((type) => <SelectItem key={type} value={type}>{type}</SelectItem>)}</SelectContent></Select>
+            <Input type="date" value={fromDate} onChange={(e) => { setFromDate(e.target.value); setPage(1); }} className="h-8 w-36 rounded-lg text-xs" aria-label="From date" />
+            <Input type="date" value={toDate} onChange={(e) => { setToDate(e.target.value); setPage(1); }} className="h-8 w-36 rounded-lg text-xs" aria-label="To date" />
+            {(fromDate || toDate) && <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => { setFromDate(""); setToDate(""); setPage(1); }}>Clear dates</Button>}
             <Button variant="ghost" size="icon-sm" onClick={() => void sync()} disabled={syncing}><RefreshCw className={`size-3.5 ${syncing ? "animate-spin" : ""}`} /></Button>
           </div>
 
@@ -216,7 +227,7 @@ export function LocationsPage() {
                   const actions = getActions("ATM Lead", item.status, Boolean(session?.is_manager), false, Boolean(session?.user));
                   return <div key={item.name} className="grid grid-cols-[3rem_minmax(0,1fr)_8rem_auto] items-center gap-3 py-2.5 hover:bg-muted/30">
                     <span className="text-center text-xs text-muted-foreground">{(page - 1) * PAGE_SIZE + index + 1}</span>
-                    <button className="min-w-0 text-left" onClick={() => setLeadDetail(item.name)}><p className="truncate text-sm font-medium">{item.business_name || item.name}</p><p className="truncate text-xs text-muted-foreground">{item.business_type || "-"}</p><p className="truncate text-xs text-muted-foreground">{item.full_address || "No address"} · {item.city || "-"}, {item.state || "-"} · {item.zip_code || "-"}</p></button>
+                    <button className="min-w-0 text-left" onClick={() => setLeadDetail(item.name)}><p className="truncate text-sm font-medium">{item.business_name || item.name}</p><p className="truncate text-xs text-muted-foreground">{item.business_type || "-"}</p><p className="truncate text-xs text-muted-foreground">{item.full_address || "No address"} · {item.city || "-"}, {item.state || "-"} · {item.zip_code || "-"}</p>{(item.status === "Rejected" || item.status === "Signed Rejected") && item.reject_reason && <p className="mt-0.5 truncate text-xs text-rose-600">Rejected: {item.reject_reason}{item.reject_reason_other ? ` — ${item.reject_reason_other}` : ""}</p>}</button>
                     <StatusBadge status={item.status} />
                     <div className="flex gap-1">{actions.slice(0, 2).map((action) => <Button key={action.action} size="sm" variant="outline" className={actionColor(action.action)} disabled={processing === item.name} onClick={() => void handleAction(item, action)}>{action.action === "approve" && <ThumbsUp className="size-3" />}{action.action === "reject" && <ThumbsDown className="size-3" />}{action.action === "install" && <Wrench className="size-3" />}{action.action === "convert" && <Zap className="size-3" />}{action.label}</Button>)}</div>
                   </div>;
